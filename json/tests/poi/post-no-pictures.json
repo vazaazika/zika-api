@@ -1,0 +1,12 @@
+{
+  "location": {
+    "lat" : -10.1212121,
+    "lng": 20.2323232
+  },
+  "address": "endereço",
+  "title": "no-pictures",
+  "type": {
+    "id": 1
+  },
+  "description" : "Teste de ponto"
+}

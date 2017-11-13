@@ -1,0 +1,31 @@
+{
+    "type": {
+        "id": 2
+    },
+    "fieldValues": [
+        {
+            "field": {
+                "id": 20
+            },
+            "value": "Yes"
+        }
+    ],
+    "address": "Novo, 15596 Narón, A Coruña, Spain",
+    "title": "Teste",
+    "description": "Teste",
+    "location": {
+        "lat": 43.5537894,
+        "lng": -8.14383650000002
+    },
+    "pictures": [
+        {
+            "id": ${PICTURE_ID_1}
+        },
+        {
+            "id": ${PICTURE_ID_2}
+        },
+        {
+            "id": ${PICTURE_ID_3}
+        }
+    ]
+}

@@ -1,0 +1,307 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {
+    "poi": {
+		  "type": "object",
+		  "properties": {
+		    "id": {
+		      "id": "id",
+		      "type": "integer"
+		    },
+		    "location": {
+		      "id": "location",
+		      "type": "object",
+		      "properties": {
+		        "lat": {
+		          "id": "lat",
+		          "type": "number"
+		        },
+		        "lng": {
+		          "id": "lng",
+		          "type": "number"
+		        }
+		      }
+		    },
+		    "address": {
+		      "id": "address",
+		      "type": "string"
+		    },
+		    "title": {
+		      "id": "title",
+		      "type": "string"
+		    },
+		    "description": {
+		      "id": "description",
+		      "type": "string"
+		    },
+		    "date": {
+		      "id": "date",
+		      "type": "string"
+		    },
+		    "type": {
+		      "id": "type",
+		      "type": "object",
+		      "properties": {
+		        "id": {
+		          "id": "id",
+		          "type": "integer"
+		        },
+		        "name": {
+		          "id": "name",
+		          "type": "string"
+		        }
+		      }
+		    },
+		    "user": {
+		      "id": "user",
+		      "type": ["object", "null"],
+		      "properties": {
+		        "id": {
+		          "id": "id",
+		          "type": "integer"
+		        },
+		        "name": {
+		          "id": "name",
+		          "type": "string"
+		        },
+		        "username": {
+		          "id": "username",
+		          "type": "string"
+		        },
+		        "enabled": {
+		          "id": "enabled",
+		          "type": "boolean"
+		        },
+		        "locked": {
+		          "id": "locked",
+		          "type": "boolean"
+		        },
+		        "roles": {
+		          "id": "roles",
+		          "type": "null"
+		        },
+		        "resources": {
+		          "id": "resources",
+		          "type": "null"
+		        },
+		        "shortName": {
+		          "id": "shortName",
+		          "type": "string"
+		        },
+		        "accountNonExpired": {
+		          "id": "accountNonExpired",
+		          "type": "boolean"
+		        },
+		        "credentialsNonExpired": {
+		          "id": "credentialsNonExpired",
+		          "type": "boolean"
+		        },
+		        "accountNonLocked": {
+		          "id": "accountNonLocked",
+		          "type": "boolean"
+		        }
+		      }
+		    },
+		    "pictures": {
+		      "id": "pictures",
+		      "type": "array",
+		      "items": {
+		        "id": "0",
+		        "type": "object",
+		        "properties": {
+		          "id": {
+		            "id": "id",
+		            "type": "integer"
+		          },
+		          "fileName": {
+		            "id": "fileName",
+		            "type": "string"
+		          },
+		          "date": {
+		            "id": "date",
+		            "type": "string"
+		          },
+		          "user": {
+		            "id": "user",
+		            "type": ["object", "null"],
+		            "properties": {
+		              "id": {
+		                "id": "id",
+		                "type": "integer"
+		              },
+		              "name": {
+		                "id": "name",
+		                "type": "string"
+		              },
+		              "username": {
+		                "id": "username",
+		                "type": "string"
+		              },
+		              "enabled": {
+		                "id": "enabled",
+		                "type": "boolean"
+		              },
+		              "locked": {
+		                "id": "locked",
+		                "type": "boolean"
+		              },
+		              "roles": {
+		                "id": "roles",
+		                "type": "null"
+		              },
+		              "resources": {
+		                "id": "resources",
+		                "type": "null"
+		              },
+		              "shortName": {
+		                "id": "shortName",
+		                "type": "string"
+		              },
+		              "accountNonExpired": {
+		                "id": "accountNonExpired",
+		                "type": "boolean"
+		              },
+		              "credentialsNonExpired": {
+		                "id": "credentialsNonExpired",
+		                "type": "boolean"
+		              },
+		              "accountNonLocked": {
+		                "id": "accountNonLocked",
+		                "type": "boolean"
+		              }
+		            }
+		          },
+		          "mimeType": {
+		            "id": "mimeType",
+		            "type": "string"
+		          },
+		          "width": {
+		            "id": "width",
+		            "type": "integer"
+		          },
+		          "height": {
+		            "id": "height",
+		            "type": "integer"
+		          }
+		        }
+		      }
+		    },
+		    "upVoteCount": {
+		      "id": "upVoteCount",
+		      "type": "integer"
+		    },
+		    "downVoteCount": {
+		      "id": "downVoteCount",
+		      "type": "integer"
+		    },
+		    "userVote": {
+		      "id": "userVote",
+		      "type": ["object", "null"],
+		      "properties": {
+		        "up": {
+		          "id": "up",
+		          "type": "boolean"
+		        }
+		      }
+		    },
+		    "published": {
+		      "id": "published",
+		      "type": "boolean"
+		    },
+		    "fieldValues": {
+		      "id": "fieldValues",
+		      "type": "array",
+		      "items": {
+		        "id": "0",
+		        "type": "object",
+		        "properties": {
+		          "id": {
+		            "id": "id",
+		            "type": "integer"
+		          },
+		          "value": {
+		            "id": "value",
+		            "type": "string"
+		          },
+		          "field": {
+		            "id": "field",
+		            "type": "object",
+		            "properties": {
+		              "id": {
+		                "id": "id",
+		                "type": "integer"
+		              },
+		              "name": {
+		                "id": "name",
+		                "type": "string"
+		              },
+		              "helpText": {
+		                "id": "helpText",
+		                "type": ["string", "null"]
+		              },
+		              "required": {
+		                "id": "required",
+		                "type": "boolean"
+		              },
+		              "type": {
+		                "id": "type",
+		                "type": "object",
+		                "properties": {
+		                  "id": {
+		                    "id": "id",
+		                    "type": "integer"
+		                  },
+		                  "name": {
+		                    "id": "name",
+		                    "type": "string"
+		                  }
+		                }
+		              },
+		              "options": {
+		                "id": "options",
+		                "type": ["array", "null"],
+		                "items": {
+		                  "id": "2",
+		                  "type": "object",
+		                  "properties": {
+		                    "id": {
+		                      "id": "id",
+		                      "type": "integer"
+		                    },
+		                    "label": {
+		                      "id": "label",
+		                      "type": "string"
+		                    },
+		                    "value": {
+		                      "id": "value",
+		                      "type": "string"
+		                    }
+		                  }
+		                }
+		              }
+		            }
+		          }
+		        }
+		      }
+		    }
+		  },
+		  "required": [
+		    "id",
+		    "location",
+		    "address",
+		    "title",
+		    "description",
+		    "date",
+		    "type",
+		    "user",
+		    "pictures",
+		    "upVoteCount",
+		    "downVoteCount",
+		    "userVote",
+		    "published",
+		    "fieldValues"
+		  ]
+		    			
+     }
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "definitions": {
+    "user": {
+    	{
+		  "$schema": "http://json-schema.org/draft-04/schema#",
+		  "type": "object",
+		  "properties": {
+		    "id": {
+		      "id": "id",
+		      "type": "integer"
+		    },
+		    "name": {
+		      "id": "name",
+		      "type": "string"
+		    },
+		    "username": {
+		      "id": "username",
+		      "type": "string"
+		    },
+		    "enabled": {
+		      "id": "enabled",
+		      "type": "boolean"
+		    },
+		    "locked": {
+		      "id": "locked",
+		      "type": "boolean"
+		    },
+		    "roles": {
+		      "id": "roles",
+		      "type": ["array", "null"],
+		      "items": {
+		        "id": "0",
+		        "type": "object",
+		        "properties": {
+		          "id": {
+		            "id": "id",
+		            "type": "integer"
+		          },
+		          "authority": {
+		            "id": "authority",
+		            "type": "string"
+		          }
+		        },
+		        "additionalProperties": false
+		      }
+		    },
+		    "resources": {
+		      "id": "resources",
+		      "type": ["array", "null"],
+		      "items": {
+		        "id": "0",
+		        "type": "object",
+		        "properties": {
+		          "id": {
+		            "id": "id",
+		            "type": "integer"
+		          },
+		          "uri": {
+		            "id": "uri",
+		            "type": "string"
+		          },
+		          "operation": {
+		            "id": "operation",
+		            "type": "string"
+		          },
+		          "open": {
+		            "id": "open",
+		            "type": "boolean"
+		          }
+		        },
+		        "additionalProperties": false
+		      }
+		    },
+		    "shortName": {
+		      "id": "shortName",
+		      "type": "string"
+		    },
+		    "accountNonExpired": {
+		      "id": "accountNonExpired",
+		      "type": "boolean"
+		    },
+		    "accountNonLocked": {
+		      "id": "accountNonLocked",
+		      "type": "boolean"
+		    },
+		    "credentialsNonExpired": {
+		      "id": "credentialsNonExpired",
+		      "type": "boolean"
+		    }
+		  },
+		  "additionalProperties": false,
+		  "required": [
+		    "id",
+		    "name",
+		    "username",
+		    "enabled",
+		    "locked",
+		    "roles",
+		    "resources",
+		    "shortName",
+		    "accountNonExpired",
+		    "accountNonLocked",
+		    "credentialsNonExpired"
+		  ]
+		}
+    }
+  }
+}

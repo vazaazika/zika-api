@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "links": {
+      "id": "links",
+      "type": "array",
+      "items": {
+        "id": "1",
+        "type": "object",
+        "properties": {
+          "rel": {
+            "id": "rel",
+            "type": "string"
+          },
+          "href": {
+            "id": "href",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "rel",
+          "href"
+        ]
+      },
+      "required": [
+        "1",
+        "0"
+      ]
+    },
+    "content": {
+    	"type": ["array", "null"],
+    	"items": {
+    		"$ref": "file:${SCHEMAS_ABSOLUTE_FOLDER}/poi/poi-schema.json#/definitions/poi"
+    	}
+    },
+    "page": {
+      "id": "page",
+      "type": "object",
+      "properties": {
+        "size": {
+          "id": "size",
+          "type": "integer"
+        },
+        "totalElements": {
+          "id": "totalElements",
+          "type": "integer"
+        },
+        "totalPages": {
+          "id": "totalPages",
+          "type": "integer"
+        },
+        "number": {
+          "id": "number",
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false,
+  "required": [
+    "links",
+    "content",
+    "page"
+  ]
+}
