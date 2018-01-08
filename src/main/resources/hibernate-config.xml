@@ -25,6 +25,7 @@
 		        <value>br.les.opus.auth</value>
 		        <value>br.les.opus.twitter.domain</value>
 		        <value>br.les.opus.instagram.domain</value>
+		        <value>br.les.opus.gamification</value>
 		    </list>
 		    </property>
 		<property name="hibernateProperties"> 
