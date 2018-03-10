@@ -28,9 +28,9 @@
             <mvc:mapping path="/**" />
             <bean class="br.les.opus.auth.core.interceptors.AuthHandlerInterceptor"/>
         </mvc:interceptor>
-         <mvc:interceptor>
+        <mvc:interceptor>
             <mvc:mapping path="/**" />
-            <bean class="br.les.opus.gamification.interceptors.GamificationLoggerInterceptor"/>
+            <bean class="br.les.opus.gamification.interceptors.GamificationInterceptor"/>
         </mvc:interceptor>
     </mvc:interceptors>
 
