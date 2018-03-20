@@ -8,18 +8,19 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
-
-import br.les.opus.commons.rest.deserializers.JtsPointDeserializer;
-import br.les.opus.commons.rest.serializers.IsoSimpleDateSerializer;
-import br.les.opus.commons.rest.serializers.JtsPointSerializer;
-import br.les.opus.dengue.api.i18n.I18nMappingJackson2HttpMessageConverter;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.datatype.hibernate4.Hibernate4Module;
 import com.vividsolutions.jts.geom.Point;
+
+import br.les.opus.commons.rest.deserializers.JtsPointDeserializer;
+import br.les.opus.commons.rest.serializers.IsoSimpleDateSerializer;
+import br.les.opus.commons.rest.serializers.JtsPointSerializer;
+import br.les.opus.dengue.api.i18n.I18nMappingJackson2HttpMessageConverter;
 
 @Configuration
 @EnableWebMvc
@@ -45,7 +46,7 @@ class ApplicationConfig extends WebMvcConfigurerAdapter {
 		SimpleModule dateModule = new SimpleModule("customDateModule");
 		dateModule.addSerializer(new IsoSimpleDateSerializer());
 		mapper.registerModule(dateModule);
-		
+
 		SimpleModule geopointModule = new SimpleModule("geopointModule");
 		geopointModule.addSerializer(Point.class, new JtsPointSerializer());
 		geopointModule.addDeserializer(Point.class, new JtsPointDeserializer());
@@ -53,6 +54,12 @@ class ApplicationConfig extends WebMvcConfigurerAdapter {
 
 		messageConverter.setObjectMapper(mapper);
 		return messageConverter;
+	}
+
+	@Override 
+	public void addResourceHandlers(ResourceHandlerRegistry registry) {
+		registry.addResourceHandler("swagger-ui.html").addResourceLocations("classpath:/META-INF/resources/");
+		registry.addResourceHandler("/webjars/**").addResourceLocations("classpath:/META-INF/resources/webjars/");
 	}
 
 	@Override
