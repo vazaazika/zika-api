@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import br.les.opus.gamification.domain.Badge;
 import br.les.opus.gamification.domain.Player;
 import br.les.opus.gamification.repositories.BadgeRepository;
+import br.les.opus.gamification.repositories.PlayerRepository;
 import br.les.opus.gamification.services.GamificationService;
 
 @RestController
@@ -27,12 +29,42 @@ public class PlayerController {
 	
 	@Autowired
 	private GamificationService gameService;
+	
+	@Autowired
+	private PlayerRepository playerDao;
 
-	@RequestMapping(value="badges", method = RequestMethod.GET) 
-	public ResponseEntity< List<Badge> > findAllBadgesAndProgressions(HttpServletRequest request) {
+	@RequestMapping(value="self/badges", method = RequestMethod.GET) 
+	public ResponseEntity< List<Badge> > findAllBadgesAndProgressionsSelf(HttpServletRequest request) {
 		Player player = gameService.loadPlayer(request);
 		
 		List<Badge> badges = badgeDao.findAllWithProgressions(player);
 		return new ResponseEntity<>(badges, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value="{playerId}/badges", method = RequestMethod.GET) 
+	public ResponseEntity< List<Badge> > findAllBadgesAndProgressionsPlayer(
+			@PathVariable Long playerId, HttpServletRequest request) {
+		Player player = playerDao.findOne(playerId);
+		if (player == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		List<Badge> badges = badgeDao.findAllWithProgressions(player);
+		return new ResponseEntity<>(badges, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value="{playerId}", method = RequestMethod.GET) 
+	public ResponseEntity<Player> findPlayer(@PathVariable Long playerId) {
+		Player player = playerDao.findOne(playerId);
+		if (player == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		return new ResponseEntity<>(player, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value="self", method = RequestMethod.GET) 
+	public ResponseEntity<Player> findPlayerSelf(HttpServletRequest request) {
+		Player player = gameService.loadPlayer(request);
+		return new ResponseEntity<>(player, HttpStatus.OK);
 	}
 }
