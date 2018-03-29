@@ -66,7 +66,7 @@ public abstract class AbstractCRUDController<T extends IdAware<Long>> extends Re
 	}
 
 	@RequestMapping(value="/{id}", method=RequestMethod.PUT) 
-	public ResponseEntity<T> updateOne(@RequestBody T t, @PathVariable Long id, BindingResult result, HttpServletRequest request) {
+	public ResponseEntity<T> updateOne(@RequestBody @Valid T t, @PathVariable Long id, BindingResult result, HttpServletRequest request) {
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
 		}

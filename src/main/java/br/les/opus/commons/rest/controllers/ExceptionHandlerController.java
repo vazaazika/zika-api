@@ -9,6 +9,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -28,9 +29,7 @@ public class ExceptionHandlerController {
 	
 	private static final Long UNEXPECTED_CONTENT = 3l;
 	
-	@ExceptionHandler(value = ValidationException.class)
-	public ResponseEntity<ErrorList> validacaoHandler(HttpServletRequest request, ValidationException exception) {
-		BindingResult resultado =  exception.getValidationResult();
+	private ResponseEntity<ErrorList> toResponseEntity(BindingResult resultado, Exception exception) {
 		
 		ErrorList erros = new ErrorList();
 		for (ObjectError validationError : resultado.getAllErrors()) {
@@ -59,6 +58,18 @@ public class ExceptionHandlerController {
 		}
 		
 		return new ResponseEntity<ErrorList>(erros, HttpStatus.BAD_REQUEST);
+	}
+	
+	@ExceptionHandler(value = ValidationException.class)
+	public ResponseEntity<ErrorList> validacaoHandler(HttpServletRequest request, ValidationException exception) {
+		BindingResult resultado =  exception.getValidationResult();
+		return toResponseEntity(resultado, exception);
+	}
+	
+	@ExceptionHandler(value = MethodArgumentNotValidException.class)
+	public ResponseEntity<ErrorList> methodArgumentNotValidHandler(HttpServletRequest request, MethodArgumentNotValidException exception) {
+		BindingResult resultado =  exception.getBindingResult();
+		return toResponseEntity(resultado, exception);
 	}
 	
 	@ExceptionHandler(value = HttpMessageNotReadableException.class)
