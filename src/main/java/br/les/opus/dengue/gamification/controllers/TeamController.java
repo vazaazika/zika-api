@@ -114,7 +114,10 @@ public class TeamController extends AbstractCRUDController<Team> {
 			HttpServletRequest request) {
 		Player player = gameService.loadPlayer(request);
 		newObject.setCreator(player);
-		return super.insert(newObject, result, response, request);
+		ResponseEntity<Team> responseEntity = super.insert(newObject, result, response, request);
+		Team team = responseEntity.getBody();
+		membershipService.addMember(team, player);
+		return responseEntity;
 	}
 	
 	@Override

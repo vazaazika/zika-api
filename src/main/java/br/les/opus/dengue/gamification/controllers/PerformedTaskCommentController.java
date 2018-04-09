@@ -39,7 +39,6 @@ public class PerformedTaskCommentController extends AbstractController<Performed
 			return new ResponseEntity<Void>(HttpStatus.NOT_FOUND);
 		}
 		
-		
 		Player player = gameService.loadPlayer(request);
 		PerformedTaskComment comment = commentDao.findOne(id);
 		if (player.isRoot() || comment.isOwnedBy(player)) {
