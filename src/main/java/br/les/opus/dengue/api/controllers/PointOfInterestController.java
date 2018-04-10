@@ -208,6 +208,7 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		 * of the point of interest
 		 */
 		if (user.isRoot() || (poi.getUser() != null && poi.getUser().equals(user))) {
+			poi.getLocation().setSRID(LatLng.GOOGLE_SRID);
 			return super.updateOne(poi, id, result, request);
 		} else {
 			return new ResponseEntity<PointOfInterest>(HttpStatus.UNAUTHORIZED);
