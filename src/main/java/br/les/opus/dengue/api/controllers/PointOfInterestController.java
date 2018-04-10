@@ -207,8 +207,13 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		 * The user only will be able to change a point of interest if he is root or owner
 		 * of the point of interest
 		 */
-		if (user.isRoot() || (poi.getUser() != null && poi.getUser().equals(user))) {
+		if (user.isRoot() || user.equals(targetPoi.getUser()) ) {
 			poi.getLocation().setSRID(LatLng.GOOGLE_SRID);
+			poi.setDate(new Date());
+			poi.setPublished(true);
+			if (user.equals(targetPoi.getUser())) {
+				poi.setUser(user);
+			}
 			return super.updateOne(poi, id, result, request);
 		} else {
 			return new ResponseEntity<PointOfInterest>(HttpStatus.UNAUTHORIZED);
