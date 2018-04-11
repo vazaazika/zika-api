@@ -47,7 +47,7 @@ public class AuthenticationController {
 	private TokenService tokenService;
 	
 	private Logger logger = Logger.getLogger(getClass());
-
+	
 	@RequestMapping(method=RequestMethod.GET) 
 	public ResponseEntity<Token> performLogin(HttpServletRequest request, 
 			@RequestParam(required=false, defaultValue = "false") Boolean longLasting) {
