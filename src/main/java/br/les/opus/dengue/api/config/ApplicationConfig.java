@@ -2,7 +2,6 @@ package br.les.opus.dengue.api.config;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -20,21 +19,20 @@ import com.vividsolutions.jts.geom.Point;
 import br.les.opus.commons.rest.deserializers.JtsPointDeserializer;
 import br.les.opus.commons.rest.serializers.IsoSimpleDateSerializer;
 import br.les.opus.commons.rest.serializers.JtsPointSerializer;
-import br.les.opus.dengue.api.i18n.I18nMappingJackson2HttpMessageConverter;
 
 @Configuration
 @EnableWebMvc
 @ComponentScan
 class ApplicationConfig extends WebMvcConfigurerAdapter {
 
-	@Autowired
-	private I18nMappingJackson2HttpMessageConverter converter;
+//	@Autowired
+//	private I18nMappingJackson2HttpMessageConverter converter;
 
 	/* Here we register the Hibernate4Module into an ObjectMapper, then set this custom-configured ObjectMapper
 	 * to the MessageConverter and return it to be added to the HttpMessageConverters of our application*/
 	public MappingJackson2HttpMessageConverter jacksonMessageConverter(){
 
-		MappingJackson2HttpMessageConverter messageConverter = converter;
+		MappingJackson2HttpMessageConverter messageConverter = new MappingJackson2HttpMessageConverter();
 
 		ObjectMapper mapper = new ObjectMapper();
 

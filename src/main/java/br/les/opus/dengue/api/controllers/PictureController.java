@@ -112,6 +112,9 @@ public class PictureController extends AbstractCRUDController<Picture> {
 		try {
 			String basePath = this.env.getProperty("document.upload.directory");
 			Picture document = pictureRepository.findOne(id);
+			if (document == null) {
+				return new ResponseEntity<Void>(HttpStatus.NOT_FOUND);
+			}
 
 			String fileName = document.getFileName(basePath);
 			File file = new File(fileName);
