@@ -121,8 +121,8 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		userRoleDao.delete(userRole);
 		return new ResponseEntity<User>(HttpStatus.OK);
 	}
-	//@RequestMapping(method = RequestMethod.GET, value = {"/customers", "customers/{customer_id}"})
-	@RequestMapping(method = RequestMethod.POST, value = "/register")
+
+	@RequestMapping(method = RequestMethod.POST)
 	public ResponseEntity<User> insert(@RequestBody @Valid User newObject,
 										BindingResult result, HttpServletResponse response, HttpServletRequest request) {
 		if (result.hasErrors()) {
