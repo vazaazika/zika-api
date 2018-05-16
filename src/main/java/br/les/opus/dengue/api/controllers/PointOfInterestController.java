@@ -17,6 +17,7 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -116,6 +117,12 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 			Pageable pageable, 
 			PagedResourcesAssembler<PointOfInterest> assembler, 
 			@RequestParam(value = "filter", required = false) List<String> stringClause) {
+
+//		SimpleMailMessage message = new SimpleMailMessage();
+//		message.setTo("anderson.jose.so@gmail.com");
+//		message.setSubject("teste");
+//		message.setText("agora");
+//		javaMailSender.send(message);
 		return super.findAll(pageable, assembler, stringClause);
 	}
 	
@@ -152,6 +159,7 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 			filter = new Filter(stringClause, super.getEntityClass());
 		}
 		List<PointOfInterest> pois = poiRepository.findAllPlain(pageable, filter);
+
 		FeatureCollectionBuilder builder = new FeatureCollectionBuilder();
 		builder.addPointsOfInterest(pois);
 		FeatureCollection featureCollection = builder.build();
