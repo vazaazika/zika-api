@@ -52,4 +52,5 @@ public class RankingController extends AbstractController<Player> {
 		PagedResources<Resource<RankedPlayer>> resources = assembler.toResource(page);
 		return new ResponseEntity<PagedResources<Resource<RankedPlayer>>>(resources, HttpStatus.OK);
 	}
+	
 }
