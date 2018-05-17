@@ -196,6 +196,7 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		
 		/*
 		 * Tratamento de validação.
+		 * 
 		 */
 		if (result.hasErrors()) {
 			throw new ValidationException(result);

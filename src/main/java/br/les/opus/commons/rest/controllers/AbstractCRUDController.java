@@ -106,4 +106,5 @@ public abstract class AbstractCRUDController<T extends IdAware<Long>> extends Re
 		repository.delete(id);
 		return new ResponseEntity<T>(HttpStatus.OK);
 	}
+	
 }
