@@ -213,7 +213,7 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		return new ResponseEntity<User>(user, HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/password/reset", method=RequestMethod.GET)
+	@RequestMapping(value = "/password/reset", method=RequestMethod.PUT)
 	public String changePassword (HttpServletRequest request){
 		Token token = tokenService.getAuthenticatedUser(request);
 		User user = token.getUser();
