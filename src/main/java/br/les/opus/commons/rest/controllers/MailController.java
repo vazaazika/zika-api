@@ -38,7 +38,11 @@ public class MailController{
         String messageBody = mailService.buildMessage(player, mailBody.getText());
         String messageTitle = "VazaZika Invitation";
 
-        mailService.send(mailBody.getTo(), messageTitle, messageBody);
+        mailService.setSubject(messageTitle);
+        mailService.setTo(mailBody.getTo());
+        mailService.setText(messageBody);
+
+        mailService.run();
 
         return new ResponseEntity<Void>(HttpStatus.OK);
     }
