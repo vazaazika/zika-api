@@ -214,6 +214,32 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		return new ResponseEntity<User>(user, HttpStatus.OK);
 	}
 
+	@RequestMapping(value = "/password/reset", method=RequestMethod.PUT)
+	public ResponseEntity<Void> resetPassword (@RequestBody User userPassword){
+
+		if (userPassword.getUsername() == null) {
+			return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
+		}
+
+		userService.changePassword(userPassword);
+
+		return new ResponseEntity<Void>(HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/password/renew", method=RequestMethod.PUT)
+	public ResponseEntity<User> renewPassword (@RequestParam(value = "token-reset", required = false) String tokenReset,
+											   @RequestBody User userPassword){
+
+		if (userPassword.getPassword() == null) {
+			return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
+		}
+
+		User user = userService.resetPassword(tokenReset, userPassword.getPassword());
+
+		return new ResponseEntity<User>(user, HttpStatus.OK);
+	}
+
+
 
 	@Override
 	protected PagingSortingFilteringRepository<User, Long> getRepository() {
