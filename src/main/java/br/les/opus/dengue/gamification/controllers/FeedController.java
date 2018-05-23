@@ -50,7 +50,7 @@ public class FeedController {
 			PagedResourcesAssembler<PerformedTask> assembler) {
 		
 		
-		Page<PerformedTask> feed = performedTaskDao.findAllOrderedByDateDesc(pageable);
+		Page<PerformedTask> feed = performedTaskDao.findAllPoiPerformedTaskOrderedByDataDesc(pageable);
 		PagedResources<Resource<PerformedTask>> resources = assembler.toResource(feed);
 		for (Resource<PerformedTask> resource : resources.getContent()) {
 			//TODO remover isso depois. O EAGER loading não está funcionando pro @Any
