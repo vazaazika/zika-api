@@ -121,9 +121,10 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		userRoleDao.delete(userRole);
 		return new ResponseEntity<User>(HttpStatus.OK);
 	}
-	
-	@RequestMapping(method = RequestMethod.POST) 
-	public ResponseEntity<User> insert(@RequestBody @Valid User newObject, BindingResult result, HttpServletResponse response, HttpServletRequest request) {
+
+	@RequestMapping(method = RequestMethod.POST)
+	public ResponseEntity<User> insert(@RequestBody @Valid User newObject,
+										BindingResult result, HttpServletResponse response, HttpServletRequest request) {
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
 		}
@@ -134,6 +135,7 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		Link detail = linkTo(this.getClass()).slash(newObject.getId()).withSelfRel();
 		response.setHeader("Location", detail.getHref());
 		newObject = userService.loadRolesAndResorces(newObject);
+
 		return new ResponseEntity<User>(newObject, HttpStatus.CREATED);
 	}
 	
@@ -161,13 +163,13 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		if (stringClause != null && !stringClause.isEmpty()) {
 			filter = new Filter(stringClause, super.getEntityClass());
 		}
-		
+
 		Page<User> page = getRepository().findAll(pageable, filter);
 		List<User> users = page.getContent();
 		for (User user : users) {
 			userService.loadRolesAndResorces(user);
 		}
-		PagedResources<Resource<User>> resources = this.toPagedResources(page, assembler);
+		PagedResources<Resource<User>> resources = null;
 		return new ResponseEntity<PagedResources<Resource<User>>>(resources, HttpStatus.OK);
 	}
 
@@ -194,6 +196,7 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		
 		/*
 		 * Tratamento de validação.
+		 * 
 		 */
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
@@ -210,6 +213,33 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		user = userService.loadRolesAndResorces(user);
 		return new ResponseEntity<User>(user, HttpStatus.OK);
 	}
+
+	@RequestMapping(value = "/password/reset", method=RequestMethod.PUT)
+	public ResponseEntity<Void> resetPassword (@RequestBody User userPassword){
+
+		if (userPassword.getUsername() == null) {
+			return new ResponseEntity<Void>(HttpStatus.BAD_REQUEST);
+		}
+
+		userService.changePassword(userPassword);
+
+		return new ResponseEntity<Void>(HttpStatus.OK);
+	}
+
+	@RequestMapping(value = "/password/renew", method=RequestMethod.PUT)
+	public ResponseEntity<User> renewPassword (@RequestParam(value = "token-reset", required = false) String tokenReset,
+											   @RequestBody User userPassword){
+
+		if (userPassword.getPassword() == null) {
+			return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
+		}
+
+		User user = userService.resetPassword(tokenReset, userPassword.getPassword());
+
+		return new ResponseEntity<User>(user, HttpStatus.OK);
+	}
+
+
 
 	@Override
 	protected PagingSortingFilteringRepository<User, Long> getRepository() {
