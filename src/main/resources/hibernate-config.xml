@@ -18,7 +18,7 @@
 
 	<bean id="sessionFactory"
 		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
-		<property name="dataSource" ref="dataSourcePostgresql" />
+		<property name="dataSource" ref="dataSourceDocker" />
 		<property name="packagesToScan">
 			<list>
 				<value>br.les.opus.dengue</value>
@@ -75,7 +75,7 @@
 	<bean id="dataSourceDocker" class="com.mchange.v2.c3p0.ComboPooledDataSource"
 		destroy-method="close">
 		<property name="driverClass" value="org.postgresql.Driver" />
-		<property name="jdbcUrl" value="jdbc:postgresql://localhost/vazazika" />
+		<property name="jdbcUrl" value="jdbc:postgresql://vazazika-db:5432/vazazika" />
 		<property name="user" value="docker" />
 		<property name="password" value="docker" />
 		<property name="minPoolSize" value="1" />
