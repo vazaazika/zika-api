@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.les.opus.auth.core.domain.Token;
+import br.les.opus.auth.core.domain.TokenPlayer;
 import br.les.opus.auth.core.domain.User;
 import br.les.opus.auth.core.repositories.TokenRepository;
 import br.les.opus.auth.core.repositories.UserRepository;
@@ -22,6 +23,7 @@ import br.les.opus.auth.core.services.DatabaseAuthenticationProvider;
 import br.les.opus.auth.core.services.TokenService;
 import br.les.opus.auth.core.services.UserService;
 import br.les.opus.auth.core.services.UsernamePasswordAuthenticationTokenBuilder;
+import br.les.opus.gamification.repositories.PlayerRepository;
 
 @RestController
 @Transactional
@@ -46,10 +48,13 @@ public class AuthenticationController {
 	@Autowired
 	private TokenService tokenService;
 	
+	@Autowired
+	private PlayerRepository playerDao;
+	
 	private Logger logger = Logger.getLogger(getClass());
 	
 	@RequestMapping(method=RequestMethod.GET) 
-	public ResponseEntity<Token> performLogin(HttpServletRequest request, 
+	public ResponseEntity<TokenPlayer> performLogin(HttpServletRequest request, 
 			@RequestParam(required=false, defaultValue = "false") Boolean longLasting) {
 		try {
 			UsernamePasswordAuthenticationToken authRequest = authRequestBuilder.build(request);
@@ -66,9 +71,16 @@ public class AuthenticationController {
 
 			userService.loadRolesAndResorces(user);
 			tokenService.removeUnusedTokens(user);
-			return new ResponseEntity<Token>(token, HttpStatus.CREATED);
+			
+			
+			TokenPlayer tokenPlayer = new TokenPlayer(authRequest);
+			tokenPlayer.setUser(user);
+			tokenPlayer.setLongLasting(longLasting);
+			tokenPlayer.setPlayer(playerDao.findOne(user.getId()));
+			
+			return new ResponseEntity<TokenPlayer>(tokenPlayer, HttpStatus.CREATED);
 		} catch (AuthenticationException e) {
-			return new ResponseEntity<Token>(HttpStatus.UNAUTHORIZED);
+			return new ResponseEntity<TokenPlayer>(HttpStatus.UNAUTHORIZED);
 		}
 	}
 	
