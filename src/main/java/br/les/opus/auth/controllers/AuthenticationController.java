@@ -23,7 +23,10 @@ import br.les.opus.auth.core.services.DatabaseAuthenticationProvider;
 import br.les.opus.auth.core.services.TokenService;
 import br.les.opus.auth.core.services.UserService;
 import br.les.opus.auth.core.services.UsernamePasswordAuthenticationTokenBuilder;
+import br.les.opus.gamification.domain.Membership;
+import br.les.opus.gamification.domain.Player;
 import br.les.opus.gamification.repositories.PlayerRepository;
+import br.les.opus.gamification.services.MembershipService;
 
 @RestController
 @Transactional
@@ -51,6 +54,9 @@ public class AuthenticationController {
 	@Autowired
 	private PlayerRepository playerDao;
 	
+	@Autowired
+	private MembershipService membershipService;
+	
 	private Logger logger = Logger.getLogger(getClass());
 	
 	@RequestMapping(method=RequestMethod.GET) 
@@ -76,7 +82,22 @@ public class AuthenticationController {
 			TokenPlayer tokenPlayer = new TokenPlayer(authRequest);
 			tokenPlayer.setUser(user);
 			tokenPlayer.setLongLasting(longLasting);
-			tokenPlayer.setPlayer(playerDao.findOne(user.getId()));
+			
+			Player player = playerDao.findOne(user.getId());
+			
+			tokenPlayer.setPlayer(player);
+			
+			Membership membership = membershipService.findCurrentMembership(player);
+			
+			/*
+			 * We use the TokenPlayer here to avoid Infinite Recursion
+			 * It's no the most elegant way to do it, but it works
+			 */
+			
+			if (membership != null) {
+				tokenPlayer.setTeam(membership.getTeam());
+			}
+			
 			
 			return new ResponseEntity<TokenPlayer>(tokenPlayer, HttpStatus.CREATED);
 		} catch (AuthenticationException e) {
