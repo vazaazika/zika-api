@@ -23,7 +23,7 @@
     <filter-class>org.apache.catalina.filters.CorsFilter</filter-class>
     <init-param>
       <param-name>cors.allowed.origins</param-name>
-      <param-value>http://localhost:8080,http://localhost:3000,http://localhost:8081,http://localhost:8082,http://178.128.9.200:8080,http://178.128.9.200:80,http://178.128.9.200,http://127.0.0.1, http://10.0.0.2, http://10.0.0.5</param-value>
+      <param-value>http://localhost:8080,http://localhost:3000,http://localhost:8081,http://localhost:8082,http://178.128.9.200:8080,http://178.128.9.200:80,http://178.128.9.200,http://127.0.0.1:8080, http://10.0.0.2:8080, http://10.0.0.5:8080</param-value>
     </init-param>
     <init-param>
       <param-name>cors.allowed.methods</param-name>
