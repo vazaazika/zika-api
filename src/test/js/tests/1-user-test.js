@@ -3,7 +3,7 @@ var expect = chakram.expect;
 var shared = require('./shared');
 
 describe("User assertions", function () {
-  it("should not login", function () {
+  it("Não deve se autenticar", function () {
     return chakram.get("http://localhost:8080/zika-api/auth/", {
       headers: {
         'Authorization': 'Basic ' + Buffer.from('marcio@zika.com.br:123456').toString('base64')
@@ -13,7 +13,7 @@ describe("User assertions", function () {
     });
   });
 
-  it("should create a user", function () {
+  it("Deve criar usuário", function () {
     return chakram.post("http://localhost:8080/zika-api/user",
       {
         name: 'Marcio Aguiar',
@@ -25,7 +25,7 @@ describe("User assertions", function () {
     });
   });
 
-  it("should login", function () {
+  it("Deve se autenticar", function () {
     return chakram.get("http://localhost:8080/zika-api/auth/", {
       headers: {
         'Authorization': 'Basic ' + Buffer.from('marcio@zika.com.br:123456').toString('base64')
@@ -37,7 +37,7 @@ describe("User assertions", function () {
     });
   });
 
-  it("should find by username", function () {
+  it("Deve localizar usuário pelo nome", function () {
     return chakram.get("http://localhost:8080/zika-api/user/find-by-username?username=marcio@zika.com.br", {
       headers: {
         'X-Auth-User-Token': shared.marcio
