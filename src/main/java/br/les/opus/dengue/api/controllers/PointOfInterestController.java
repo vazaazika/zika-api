@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
+import br.les.opus.dengue.core.domain.enumeration.PoiStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
@@ -135,8 +136,8 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		logger.info("Recuperando objeto com id: " + id);
 		
 		PointOfInterest poi = poiRepository.findOne(id);
-		
-		/**
+
+				/**
 		 * Check if the current user has voted in this poi
 		 */
 		if (tokenService.hasAuthenticatedUser(request)) {
@@ -175,6 +176,7 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 			Token token = tokenService.getAuthenticatedUser(request);
 			newObject.setUser(token.getUser());
 		}
+
 		
 		if (newObject.getFieldValues() != null) {
 			for (FieldValue value : newObject.getFieldValues()) {
@@ -185,6 +187,8 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		List<Picture> documents = newObject.getPictures();
 		newObject.setPictures(new ArrayList<Picture>());
 		newObject.getLocation().setSRID(LatLng.GOOGLE_SRID);
+		newObject.setPoiStatus(PoiStatus.OPEN);
+
 		ResponseEntity<PointOfInterest> responseEntity = super.insert(newObject, result, response, request);
 		
 		/**
@@ -310,5 +314,79 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		voteService.vote(poi, vote);
 		return new ResponseEntity<>(vote, HttpStatus.OK);
 	}
-	
+
+
+
+	@RequestMapping(value="{id}/statusToInAnalysis", method=RequestMethod.PUT)
+	public ResponseEntity<PointOfInterest> updatePoiStatusTypeToInAnalysis(@RequestBody PointOfInterest poi,
+													 @PathVariable Long id, BindingResult result, HttpServletRequest request) {
+
+		PointOfInterest targetPoi = poiRepository.findOne(id);
+		if (targetPoi == null) {
+			return new ResponseEntity<PointOfInterest>(HttpStatus.NOT_FOUND);
+		}
+
+		Token token = tokenService.getAuthenticatedUser(request);
+		User user = token.getUser();
+		/**
+		 * The user only will be able to change a point of interest if he is root or owner
+		 * of the point of interest
+		 */
+		if (user.isRoot() || user.isHealthAgent() ) {
+			poi.getLocation().setSRID(LatLng.GOOGLE_SRID);
+			poi.setDate(new Date());
+			poi.setPublished(true);
+			if (poi.getPoiStatus().equals(PoiStatus.OPEN)){
+				poi.setPoiStatus(PoiStatus.IN_ANALYSIS);
+			}
+			if (user.equals(targetPoi.getUser())) {
+				poi.setUser(user);
+			}
+
+			logger.info("Alterando status de aberto para em analise " + poi);
+
+			return super.updateOne(poi, id, result, request);
+		} else {
+			return new ResponseEntity<PointOfInterest>(HttpStatus.UNAUTHORIZED);
+		}
+	}
+
+
+	@RequestMapping(value="{id}/statusToTreated", method=RequestMethod.PUT)
+	public ResponseEntity<PointOfInterest> updatePoiStatusTypeToTreated(@RequestBody PointOfInterest poi,
+																		   @PathVariable Long id, BindingResult result, HttpServletRequest request) {
+
+		PointOfInterest targetPoi = poiRepository.findOne(id);
+		if (targetPoi == null) {
+			return new ResponseEntity<PointOfInterest>(HttpStatus.NOT_FOUND);
+		}
+
+		Token token = tokenService.getAuthenticatedUser(request);
+		User user = token.getUser();
+		/**
+		 * The user only will be able to change a point of interest if he is root or owner
+		 * of the point of interest
+		 */
+
+		if (user.isRoot() || user.isHealthAgent() ) {
+			poi.getLocation().setSRID(LatLng.GOOGLE_SRID);
+			poi.setDate(new Date());
+			poi.setPublished(true);
+			if(poi.getPoiStatus().equals(PoiStatus.IN_ANALYSIS)){
+				poi.setPoiStatus(PoiStatus.TREATED);
+			}
+
+			if (user.equals(targetPoi.getUser())) {
+				poi.setUser(user);
+			}
+			logger.info("Alterando status de em analise para tratrado " + poi);
+
+
+			return super.updateOne(poi, id, result, request);
+		} else {
+			return new ResponseEntity<PointOfInterest>(HttpStatus.UNAUTHORIZED);
+		}
+	}
+
+
 }
