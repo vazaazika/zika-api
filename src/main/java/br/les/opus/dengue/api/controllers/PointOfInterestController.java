@@ -187,7 +187,7 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		List<Picture> documents = newObject.getPictures();
 		newObject.setPictures(new ArrayList<Picture>());
 		newObject.getLocation().setSRID(LatLng.GOOGLE_SRID);
-		newObject.setPoiStatus(PoiStatus.OPEN);
+		newObject.setPoiStatus (PoiStatus.OPEN);
 
 		ResponseEntity<PointOfInterest> responseEntity = super.insert(newObject, result, response, request);
 
