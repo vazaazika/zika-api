@@ -209,18 +209,24 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		}
 		
 		updatingObject.setId(id);
-		
-		/*
-		 * Tratamento de validação.
-		 * 
-		 */
+
+		return super.updateOne(updatingObject, id, result, request);
+	}
+
+	@RequestMapping(value="/{id}/username", method=RequestMethod.PUT)
+	public ResponseEntity<User> changeUsername(@RequestBody User updatingObject,
+										  @PathVariable Long id, BindingResult result, HttpServletRequest request) {
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
 		}
 
-		return super.updateOne(updatingObject, id, result, request);
-//		repository.save(updatingObject);
-//		return new ResponseEntity<User>(HttpStatus.OK);
+		repository.setUsername(id, updatingObject.getUsername());
+
+		User user = repository.findOne(id);
+
+
+
+		return new ResponseEntity<User>(user, HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "self", method=RequestMethod.GET) 
