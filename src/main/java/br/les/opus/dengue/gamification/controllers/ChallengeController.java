@@ -22,6 +22,7 @@ import br.les.opus.gamification.domain.Player;
 import br.les.opus.gamification.domain.Team;
 import br.les.opus.gamification.domain.challenge.Challenge;
 import br.les.opus.gamification.domain.challenge.ChallengeEntity;
+import br.les.opus.gamification.domain.challenge.ChallengeName;
 import br.les.opus.gamification.domain.challenge.PerformedChallenge;
 import br.les.opus.gamification.repositories.ChallengeEntityRepository;
 import br.les.opus.gamification.repositories.ChallengeRepository;
@@ -85,31 +86,29 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		return new ResponseEntity<List<Challenge>>(challenges, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value = "/{challengeId}/self", method = RequestMethod.POST)
-	public ResponseEntity<PerformedChallenge> challengeEnroll(@PathVariable Long challengeId, HttpServletRequest request){
+	
+	
+	@RequestMapping(value = "/strike", method = RequestMethod.POST)
+	public ResponseEntity<PerformedChallenge> challengeEnroll(HttpServletRequest request){
 		Player loggedPlayer = gameService.loadPlayer(request);
 		
 		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
 			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 		}
 		
-		Challenge challenge = repository.findOne(challengeId);
+		Challenge challenge = repository.findChallengeByName(ChallengeName.STRIKE.getName());
+		
 		if(challenge == null) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
-		
-		
-		if(!challenge.getChallengeType().getName().equals("Individual")){
-			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-		}
-		
+				
 		
 		List<PerformedChallenge> pChallenges = pcDao.findAllIncompletePerformedChallengeByPlayerAndChallenge(loggedPlayer, challenge);
 		
 		
 		//check if player is already enrolled in a challenge
 		if(pChallenges != null && !pChallenges.isEmpty()) {
-			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+			return new ResponseEntity<>(pChallenges.get(0), HttpStatus.FORBIDDEN);
 		}
 		
 		//enroll the player into the challenge
@@ -160,6 +159,59 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		pfc.setEntities(Arrays.asList(entity));
 		
 		return new ResponseEntity<PerformedChallenge>(pfc, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/strike/status", method = RequestMethod.GET)
+	public ResponseEntity<PerformedChallenge> verifyStrikeStatus(HttpServletRequest request){
+		Player loggedPlayer = gameService.loadPlayer(request);
+		
+		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		}
+		
+		Challenge challenge = repository.findChallengeByName(ChallengeName.STRIKE.getName());
+		
+		if(challenge == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+				
+		
+		List<PerformedChallenge> pChallenges = pcDao.findAllIncompletePerformedChallengeByPlayerAndChallenge(loggedPlayer, challenge);
+		
+		
+		//check if player is already enrolled in a challenge
+		if(pChallenges != null && !pChallenges.isEmpty()) {
+			return new ResponseEntity<>(pChallenges.get(0), HttpStatus.FOUND);
+		}else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+	}
+	
+	@RequestMapping(value = "/ontop/status", method = RequestMethod.GET)
+	public ResponseEntity<OnTop> verifyOnTopStatus(HttpServletRequest request){
+		Player loggedPlayer = gameService.loadPlayer(request);
+		
+		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		}
+		
+		//get the player team
+		Membership membership = membershipService.findCurrentMembership(loggedPlayer);
+		
+		if(membership == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		Team team = membership.getTeam();
+		
+		//verify if team is already on top, if not add it on the challenge
+		OnTop onTop = onTopDao.findOneByTeam(team.getId());
+		
+		if(onTop == null) {
+			return new ResponseEntity<OnTop>(HttpStatus.NOT_FOUND);
+		}else {
+			return new ResponseEntity<>(onTop, HttpStatus.FOUND);
+		}
 	}
 	
 	
