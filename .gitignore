@@ -84,3 +84,4 @@ release.properties
 
 .idea/
 *.iml
+/src/test/js/node_modules/

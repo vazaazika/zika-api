@@ -1,12 +1,67 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:web="http://java.sun.com/xml/ns/javaee" xmlns="http://java.sun.com/xml/ns/javaee" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd" id="WebApp_ID" version="2.5">
-  <servlet>
-    <servlet-name>dengueServlet</servlet-name>
-    <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
-    <init-param>
-      <param-name>contextConfigLocation</param-name>
-      <param-value>classpath:test-app-config.xml</param-value>
-    </init-param>
-    <load-on-startup>1</load-on-startup>
-  </servlet>
+    <display-name>zika-api</display-name>
+    <filter>
+        <filter-name>characterEncodingFilter</filter-name>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+        <init-param>
+            <param-name>forceEncoding</param-name>
+            <param-value>true</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>characterEncodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>CorsFilter</filter-name>
+        <filter-class>org.apache.catalina.filters.CorsFilter</filter-class>
+        <init-param>
+            <param-name>cors.allowed.origins</param-name>
+            <param-value>http://localhost:8080,http://localhost:3000,http://localhost:8081,http://localhost:8082,http://178.128.9.200:8080,http://178.128.9.200:80,http://178.128.9.200,http://127.0.0.1, http://10.0.0.2, http://10.0.0.5</param-value>
+        </init-param>
+        <init-param>
+            <param-name>cors.allowed.methods</param-name>
+            <param-value>GET,POST,HEAD,OPTIONS,PUT,DELETE</param-value>
+        </init-param>
+        <init-param>
+            <param-name>cors.allowed.headers</param-name>
+            <param-value>Content-Type,Authorization, X-Requested-With,accept,Origin,Access-Control-Request-Method,Access-Control-Request-Headers,X-Auth-User-Token</param-value>
+        </init-param>
+        <init-param>
+            <param-name>cors.exposed.headers</param-name>
+            <param-value>Access-Control-Allow-Origin,Access-Control-Allow-Credentials</param-value>
+        </init-param>
+        <init-param>
+            <param-name>cors.support.credentials</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <init-param>
+            <param-name>cors.preflight.maxage</param-name>
+            <param-value>10</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>CorsFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <servlet>
+        <servlet-name>dengueServlet</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>classpath:test-app-config.xml</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>dengueServlet</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
 </web-app>

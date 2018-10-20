@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/zika-api.iml" filepath="$PROJECT_DIR$/.idea/zika-api.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../zika-core/zika-core.iml" filepath="$PROJECT_DIR$/../zika-core/zika-core.iml" />
+    </modules>
+  </component>
+</project>
