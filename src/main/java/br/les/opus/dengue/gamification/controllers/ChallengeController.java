@@ -17,17 +17,20 @@ import org.springframework.web.bind.annotation.RestController;
 import br.les.opus.commons.persistence.PagingSortingFilteringRepository;
 import br.les.opus.commons.rest.controllers.AbstractCRUDController;
 import br.les.opus.gamification.domain.Membership;
-import br.les.opus.gamification.domain.OnTop;
 import br.les.opus.gamification.domain.Player;
 import br.les.opus.gamification.domain.Team;
 import br.les.opus.gamification.domain.challenge.Challenge;
 import br.les.opus.gamification.domain.challenge.ChallengeEntity;
 import br.les.opus.gamification.domain.challenge.ChallengeName;
+import br.les.opus.gamification.domain.challenge.FightChallenge;
+import br.les.opus.gamification.domain.challenge.OnTop;
 import br.les.opus.gamification.domain.challenge.PerformedChallenge;
 import br.les.opus.gamification.repositories.ChallengeEntityRepository;
 import br.les.opus.gamification.repositories.ChallengeRepository;
+import br.les.opus.gamification.repositories.FightChallengeRepository;
 import br.les.opus.gamification.repositories.OnTopRepository;
 import br.les.opus.gamification.repositories.PerformedChallengeRepository;
+import br.les.opus.gamification.repositories.PlayerRepository;
 import br.les.opus.gamification.services.GamificationService;
 import br.les.opus.gamification.services.MembershipService;
 
@@ -52,6 +55,12 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 	
 	@Autowired
 	private OnTopRepository onTopDao;
+	
+	@Autowired
+	private PlayerRepository playerDao;
+	
+	@Autowired
+	private FightChallengeRepository fightDao;
 
 	@Override
 	protected PagingSortingFilteringRepository<Challenge, Long> getRepository() {
@@ -160,6 +169,61 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		
 		return new ResponseEntity<PerformedChallenge>(pfc, HttpStatus.OK);
 	}
+	
+	@RequestMapping(value = "/fight/{playerId}", method = RequestMethod.POST)
+	public ResponseEntity<FightChallenge> enrollFightChallenge(@PathVariable Long playerId, HttpServletRequest request){
+		Player loggedPlayer = gameService.loadPlayer(request);
+		Player rival = playerDao.findOne(playerId);
+				
+		//verify players
+		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		}
+		
+		if (rival == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		if(loggedPlayer.equals(rival)) {
+			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+		}
+		
+		FightChallenge challenge = fightDao.findOneByPlayers(loggedPlayer, rival);
+		
+		if(challenge == null) {
+			challenge = new FightChallenge(loggedPlayer, rival);
+			challenge = fightDao.save(challenge);
+			
+			return new ResponseEntity<>(HttpStatus.OK);
+		}else {
+			return new ResponseEntity<>(challenge, HttpStatus.FORBIDDEN);
+		}
+
+		
+		//sendInvitationChallengeEmail(Player loggedPlayer, Player rival);
+		
+		//return null;
+		
+		/*Challenge challenge = repository.findChallengeByName(ChallengeName.STRIKE.getName());
+		
+		if(challenge == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+				
+		
+		List<PerformedChallenge> pChallenges = pcDao.findAllIncompletePerformedChallengeByPlayerAndChallenge(loggedPlayer, challenge);
+		
+		
+		//check if player is already enrolled in a challenge
+		if(pChallenges != null && !pChallenges.isEmpty()) {
+			return new ResponseEntity<>(pChallenges.get(0), HttpStatus.FORBIDDEN);
+		}
+		
+		//enroll the player into the challenge
+		return enroll(loggedPlayer, challenge);*/
+	}
+	
+	
 	
 	@RequestMapping(value = "/strike/status", method = RequestMethod.GET)
 	public ResponseEntity<PerformedChallenge> verifyStrikeStatus(HttpServletRequest request){
