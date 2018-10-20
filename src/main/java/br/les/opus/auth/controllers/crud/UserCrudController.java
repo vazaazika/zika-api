@@ -3,22 +3,11 @@ package br.les.opus.auth.controllers.crud;
 import static org.springframework.hateoas.mvc.ControllerLinkBuilder.linkTo;
 
 import java.util.List;
-import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
-import br.les.opus.gamification.domain.Invite;
-import br.les.opus.gamification.domain.PerformedTask;
-import br.les.opus.gamification.domain.Player;
-import br.les.opus.gamification.domain.Task;
-import br.les.opus.gamification.repositories.InviteRepository;
-import br.les.opus.gamification.repositories.PerformedTaskRepository;
-import br.les.opus.gamification.repositories.TaskRepository;
-import br.les.opus.gamification.services.InviteService;
-import br.les.opus.gamification.services.PerformedTaskService;
-import br.les.opus.gamification.services.TaskGroupService;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -72,10 +61,7 @@ public class UserCrudController extends AbstractCRUDController<User>{
 	
 	@Autowired
 	private UserService userService;
-
-	@Autowired
-	private InviteService inviteService;
-
+	
 	@Override
 	protected User doFiltering(User user) {
 		List<Role> roles = roleDao.findAllByUser(user);
@@ -138,9 +124,7 @@ public class UserCrudController extends AbstractCRUDController<User>{
 
 	@RequestMapping(method = RequestMethod.POST)
 	public ResponseEntity<User> insert(@RequestBody @Valid User newObject,
-										BindingResult result,
-									   HttpServletResponse response,
-									   HttpServletRequest request) {
+										BindingResult result, HttpServletResponse response, HttpServletRequest request) {
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
 		}
@@ -209,24 +193,17 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		}
 		
 		updatingObject.setId(id);
-
-		return super.updateOne(updatingObject, id, result, request);
-	}
-
-	@RequestMapping(value="/{id}/username", method=RequestMethod.PUT)
-	public ResponseEntity<User> changeUsername(@RequestBody User updatingObject,
-										  @PathVariable Long id, BindingResult result, HttpServletRequest request) {
+		
+		/*
+		 * Tratamento de validação.
+		 * 
+		 */
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
 		}
-
-		repository.setUsername(id, updatingObject.getUsername());
-
-		User user = repository.findOne(id);
-
-
-
-		return new ResponseEntity<User>(user, HttpStatus.OK);
+		
+		repository.save(updatingObject);
+		return new ResponseEntity<User>(HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "self", method=RequestMethod.GET) 
@@ -262,25 +239,6 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		return new ResponseEntity<User>(user, HttpStatus.OK);
 	}
 
-	@RequestMapping(value = "/join/{invitationId}", method = RequestMethod.POST)
-	public ResponseEntity<User> joinByInvitation(@RequestBody @Valid User newObject,
-									   BindingResult result, HttpServletResponse response, HttpServletRequest request,
-												 @PathVariable String invitationId) {
-		if (result.hasErrors()) {
-			throw new ValidationException(result);
-		}
-		if (newObject.getPassword() != null) {
-			newObject.setPassword(DigestUtils.md5Hex(newObject.getPassword()));
-		}
-		newObject = userService.save(newObject);
-		Link detail = linkTo(this.getClass()).slash(newObject.getId()).withSelfRel();
-		response.setHeader("Location", detail.getHref());
-		newObject = userService.loadRolesAndResorces(newObject);
-
-		inviteService.sendXPForInvite(invitationId, newObject);
-
-		return new ResponseEntity<User>(newObject, HttpStatus.CREATED);
-	}
 
 
 	@Override
