@@ -1,11 +1,17 @@
 package br.les.opus.dengue.gamification.controllers;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.PagedResources;
+import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,8 +27,10 @@ import br.les.opus.gamification.domain.Player;
 import br.les.opus.gamification.domain.Team;
 import br.les.opus.gamification.domain.challenge.Challenge;
 import br.les.opus.gamification.domain.challenge.ChallengeEntity;
+import br.les.opus.gamification.domain.challenge.ChallengeInvitation;
 import br.les.opus.gamification.domain.challenge.ChallengeName;
 import br.les.opus.gamification.domain.challenge.FightChallenge;
+import br.les.opus.gamification.domain.challenge.InvitationStatus;
 import br.les.opus.gamification.domain.challenge.OnTop;
 import br.les.opus.gamification.domain.challenge.PerformedChallenge;
 import br.les.opus.gamification.repositories.ChallengeEntityRepository;
@@ -31,6 +39,7 @@ import br.les.opus.gamification.repositories.FightChallengeRepository;
 import br.les.opus.gamification.repositories.OnTopRepository;
 import br.les.opus.gamification.repositories.PerformedChallengeRepository;
 import br.les.opus.gamification.repositories.PlayerRepository;
+import br.les.opus.gamification.services.ChallengeService;
 import br.les.opus.gamification.services.GamificationService;
 import br.les.opus.gamification.services.MembershipService;
 
@@ -40,6 +49,9 @@ import br.les.opus.gamification.services.MembershipService;
 public class ChallengeController extends AbstractCRUDController<Challenge>{
 	@Autowired
 	private GamificationService gameService;
+	
+	@Autowired
+	private ChallengeService challengeService;
 	
 	@Autowired
 	private ChallengeRepository repository;
@@ -187,44 +199,53 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		if(loggedPlayer.equals(rival)) {
 			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
 		}
-		
+				
 		FightChallenge challenge = fightDao.findOneByPlayers(loggedPlayer, rival);
 		
-		if(challenge == null) {
-			challenge = new FightChallenge(loggedPlayer, rival);
-			challenge = fightDao.save(challenge);
-			
-			return new ResponseEntity<>(HttpStatus.OK);
-		}else {
+		
+		if(challenge != null) {
 			return new ResponseEntity<>(challenge, HttpStatus.FORBIDDEN);
 		}
+		
+		challenge = new FightChallenge(loggedPlayer, rival);
+		challenge = fightDao.save(challenge);
+		
+		challengeService.sendInvitationFightChallente(loggedPlayer, rival, challenge.getId());
 
-		
-		//sendInvitationChallengeEmail(Player loggedPlayer, Player rival);
-		
-		//return null;
-		
-		/*Challenge challenge = repository.findChallengeByName(ChallengeName.STRIKE.getName());
-		
-		if(challenge == null) {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
-				
-		
-		List<PerformedChallenge> pChallenges = pcDao.findAllIncompletePerformedChallengeByPlayerAndChallenge(loggedPlayer, challenge);
-		
-		
-		//check if player is already enrolled in a challenge
-		if(pChallenges != null && !pChallenges.isEmpty()) {
-			return new ResponseEntity<>(pChallenges.get(0), HttpStatus.FORBIDDEN);
-		}
-		
-		//enroll the player into the challenge
-		return enroll(loggedPlayer, challenge);*/
+		return new ResponseEntity<>(challenge, HttpStatus.OK);
 	}
 	
-	
-	
+	@RequestMapping(value = "/fight/accept/{fcId}", method = RequestMethod.POST)
+	public ResponseEntity<String> acceptFightChallenge(@PathVariable Long fcId, HttpServletRequest request){
+		ChallengeInvitation invitation = new ChallengeInvitation();
+		
+		FightChallenge fc = fightDao.findOne(fcId);
+		
+		if(fc == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		Player challenger = fc.getChallenger();
+		Player rival = fc.getRival();
+		
+		Challenge fightChallenge = repository.findChallengeByName(ChallengeName.FIGHT.getName()); 
+		
+		if(!fc.getStatus().equals(InvitationStatus.ONHOLD.getValue())) {
+			return invitation.getAlreadyEnrolledMessage(challenger, rival, fightChallenge);
+		}
+		
+		if(!challengeService.checkValidDate(fc)) {
+			fc.setStatus(InvitationStatus.EXPIRED.getValue());
+			
+			return invitation.getExpirationMessage(challenger, rival, fightChallenge);
+		}
+		
+		fc.setStartDate(new Date());
+		fc.setStatus(InvitationStatus.ACCEPTED.getValue());
+		
+		return invitation.getAcceptanceMessage(challenger, rival, fightChallenge);
+	}
+
 	@RequestMapping(value = "/strike/status", method = RequestMethod.GET)
 	public ResponseEntity<PerformedChallenge> verifyStrikeStatus(HttpServletRequest request){
 		Player loggedPlayer = gameService.loadPlayer(request);
@@ -278,6 +299,29 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		}
 	}
 	
+	@RequestMapping(value = "/fight/{playerId}/status", method = RequestMethod.GET)
+	public ResponseEntity<PagedResources<Resource<FightChallenge>>> verifyFightChallengeStatus(Pageable pageable,
+			PagedResourcesAssembler<FightChallenge> assembler, @PathVariable Long playerId, HttpServletRequest request){
+		Player loggedPlayer = gameService.loadPlayer(request);
+		Player rival = playerDao.findOne(playerId);
+				
+		//verify players
+		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		}
+		
+		if (rival == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		if(loggedPlayer.equals(rival)) {
+			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+		}
+				
+		Page<FightChallenge> page = fightDao.findAllByPlayers(loggedPlayer, rival, pageable);
+		PagedResources<Resource<FightChallenge>> resources = this.toPagedResources(page, assembler);
+		return new ResponseEntity<PagedResources<Resource<FightChallenge>>>(resources, HttpStatus.OK);
+	}
 	
 	
 	/*@RequestMapping(value = "/self/constraint", method = RequestMethod.GET)
