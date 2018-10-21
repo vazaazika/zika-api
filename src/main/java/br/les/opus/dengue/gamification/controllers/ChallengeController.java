@@ -33,12 +33,15 @@ import br.les.opus.gamification.domain.challenge.FightChallenge;
 import br.les.opus.gamification.domain.challenge.InvitationStatus;
 import br.les.opus.gamification.domain.challenge.OnTop;
 import br.les.opus.gamification.domain.challenge.PerformedChallenge;
+import br.les.opus.gamification.domain.challenge.TeamUpChallenge;
 import br.les.opus.gamification.repositories.ChallengeEntityRepository;
 import br.les.opus.gamification.repositories.ChallengeRepository;
 import br.les.opus.gamification.repositories.FightChallengeRepository;
 import br.les.opus.gamification.repositories.OnTopRepository;
 import br.les.opus.gamification.repositories.PerformedChallengeRepository;
 import br.les.opus.gamification.repositories.PlayerRepository;
+import br.les.opus.gamification.repositories.TeamRepository;
+import br.les.opus.gamification.repositories.TeamUpChallengeRepository;
 import br.les.opus.gamification.services.ChallengeService;
 import br.les.opus.gamification.services.GamificationService;
 import br.les.opus.gamification.services.MembershipService;
@@ -73,6 +76,12 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 	
 	@Autowired
 	private FightChallengeRepository fightDao;
+	
+	@Autowired
+	private TeamRepository teamDao;
+	
+	@Autowired
+	private TeamUpChallengeRepository tucDao;
 
 	@Override
 	protected PagingSortingFilteringRepository<Challenge, Long> getRepository() {
@@ -225,25 +234,94 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
 		
-		Player challenger = fc.getChallenger();
 		Player rival = fc.getRival();
 		
 		Challenge fightChallenge = repository.findChallengeByName(ChallengeName.FIGHT.getName()); 
 		
 		if(!fc.getStatus().equals(InvitationStatus.ONHOLD.getValue())) {
-			return invitation.getAlreadyEnrolledMessage(challenger, rival, fightChallenge);
+			return invitation.getAlreadyEnrolledMessage(rival, fightChallenge);
 		}
 		
-		if(!challengeService.checkValidDate(fc)) {
+		if(!challengeService.checkValidDate(fc.getCreatedDate())) {
 			fc.setStatus(InvitationStatus.EXPIRED.getValue());
 			
-			return invitation.getExpirationMessage(challenger, rival, fightChallenge);
+			return invitation.getExpirationMessage(rival, fightChallenge);
 		}
 		
 		fc.setStartDate(new Date());
 		fc.setStatus(InvitationStatus.ACCEPTED.getValue());
 		
-		return invitation.getAcceptanceMessage(challenger, rival, fightChallenge);
+		return invitation.getAcceptanceMessage(rival, fightChallenge);
+	}
+	
+	@RequestMapping(value = "/teamup/{teamId}", method = RequestMethod.POST)
+	public ResponseEntity<TeamUpChallenge> enrollTeamUpChallenge(@PathVariable Long teamId, HttpServletRequest request){
+		Player loggedPlayer = gameService.loadPlayer(request);
+		Team rivalTeam = teamDao.findOne(teamId);
+				
+		//verify player
+		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		}
+		
+		//get the player team
+		Membership membership = membershipService.findCurrentMembership(loggedPlayer);
+		
+		if(membership == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		Team challengerTeam = membership.getTeam();
+		
+		
+		if (rivalTeam == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		if(challengerTeam.equals(rivalTeam)) {
+			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+		}
+		
+		TeamUpChallenge challenge = tucDao.findOneByPlayers(challengerTeam, rivalTeam);
+		
+		if(challenge != null) {
+			return new ResponseEntity<>(challenge, HttpStatus.FORBIDDEN);
+		}
+		
+		challenge = new TeamUpChallenge(challengerTeam, rivalTeam);
+		challenge = tucDao.save(challenge);
+		
+		challengeService.sendInvitationTeamUpChallente(loggedPlayer, challengerTeam, rivalTeam, challenge.getId());
+
+		return new ResponseEntity<>(challenge, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/teamup/accept/{tuId}", method = RequestMethod.GET)
+	public ResponseEntity<String> acceptTeamUpChallenge(@PathVariable Long tuId, HttpServletRequest request){
+		ChallengeInvitation invitation = new ChallengeInvitation();
+		
+		TeamUpChallenge tu = tucDao.findOne(tuId);
+		
+		if(tu == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		Challenge challenge = repository.findChallengeByName(ChallengeName.TEAMUP.getName()); 
+		
+		if(!tu.getStatus().equals(InvitationStatus.ONHOLD.getValue())) {
+			return invitation.getAlreadyEnrolledTeamMessage(challenge);
+		}
+		
+		if(!challengeService.checkValidDate(tu.getCreatedDate())) {
+			tu.setStatus(InvitationStatus.EXPIRED.getValue());
+			
+			return invitation.getTeamExpirationMessage(challenge);
+		}
+		
+		tu.setStartDate(new Date());
+		tu.setStatus(InvitationStatus.ACCEPTED.getValue());
+		
+		return invitation.getTeamAcceptanceMessage(challenge);
 	}
 
 	@RequestMapping(value = "/strike/status", method = RequestMethod.GET)
@@ -321,6 +399,41 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		Page<FightChallenge> page = fightDao.findAllByPlayers(loggedPlayer, rival, pageable);
 		PagedResources<Resource<FightChallenge>> resources = this.toPagedResources(page, assembler);
 		return new ResponseEntity<PagedResources<Resource<FightChallenge>>>(resources, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "/teamup/{teamId}/status", method = RequestMethod.GET)
+	public ResponseEntity<PagedResources<Resource<TeamUpChallenge>>> verifyTeamUpChallengeStatus(Pageable pageable,
+			PagedResourcesAssembler<TeamUpChallenge> assembler, @PathVariable Long teamId, HttpServletRequest request){
+		Player loggedPlayer = gameService.loadPlayer(request);
+		
+				
+		//verify players
+		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		}
+		
+		//get the player team
+		Membership membership = membershipService.findCurrentMembership(loggedPlayer);
+		
+		if(membership == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		Team challengerTeam = membership.getTeam();
+		
+		Team rivalTeam = teamDao.findOne(teamId);
+		
+		if (rivalTeam == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		if(challengerTeam.equals(rivalTeam)) {
+			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+		}
+				
+		Page<TeamUpChallenge> page = tucDao.findAllByTeams(challengerTeam, rivalTeam, pageable);
+		PagedResources<Resource<TeamUpChallenge>> resources = this.toPagedResources(page, assembler);
+		return new ResponseEntity<PagedResources<Resource<TeamUpChallenge>>>(resources, HttpStatus.OK);
 	}
 	
 	
