@@ -117,6 +117,12 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 	}
 	
 	
+	/* ******************************************************************************************
+	 * 
+	 * 										Strike Challenge
+	 * 
+	 * *****************************************************************************************/
+	
 	
 	@RequestMapping(value = "/strike", method = RequestMethod.POST)
 	public ResponseEntity<PerformedChallenge> challengeEnroll(HttpServletRequest request){
@@ -145,38 +151,6 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		return enroll(loggedPlayer, challenge);
 	}
 	
-	@RequestMapping(value = "/ontop", method = RequestMethod.POST)
-	public ResponseEntity<OnTop> challengeEnrollTeamOnTop( HttpServletRequest request){
-		Player loggedPlayer = gameService.loadPlayer(request);
-		
-		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		
-		//get the player team
-		Membership membership = membershipService.findCurrentMembership(loggedPlayer);
-		
-		if(membership == null) {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
-		
-		Team team = membership.getTeam();
-		
-		//verify if team is already on top, if not add it on the challenge
-		OnTop onTop = onTopDao.findOneByTeam(team.getId());
-		
-		if(onTop == null) {
-			onTop = new OnTop();
-			onTop.setTeam(team);
-			onTop =  onTopDao.save(onTop);
-			
-			return new ResponseEntity<OnTop>(onTop, HttpStatus.OK);
-		}else {
-			return new ResponseEntity<>(onTop, HttpStatus.FORBIDDEN);
-		}
-	}
-	
-	
 	private ResponseEntity<PerformedChallenge> enroll(Player player, Challenge challenge){
 		PerformedChallenge pfc = new PerformedChallenge();
 		pfc.setChallenge(challenge);
@@ -190,6 +164,38 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		
 		return new ResponseEntity<PerformedChallenge>(pfc, HttpStatus.OK);
 	}
+	
+	@RequestMapping(value = "/strike/status", method = RequestMethod.GET)
+	public ResponseEntity<PerformedChallenge> verifyStrikeStatus(HttpServletRequest request){
+		Player loggedPlayer = gameService.loadPlayer(request);
+		
+		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		}
+		
+		Challenge challenge = repository.findChallengeByName(ChallengeName.STRIKE.getName());
+		
+		if(challenge == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+				
+		
+		List<PerformedChallenge> pChallenges = pcDao.findAllIncompletePerformedChallengeByPlayerAndChallenge(loggedPlayer, challenge);
+		
+		
+		//check if player is already enrolled in a challenge
+		if(pChallenges != null && !pChallenges.isEmpty()) {
+			return new ResponseEntity<>(pChallenges.get(0), HttpStatus.FOUND);
+		}else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+	}
+	
+	/* ******************************************************************************************
+	 * 
+	 * 										Fight Challenge
+	 * 
+	 * *****************************************************************************************/
 	
 	@RequestMapping(value = "/fight/{playerId}", method = RequestMethod.POST)
 	public ResponseEntity<FightChallenge> enrollFightChallenge(@PathVariable Long playerId, HttpServletRequest request){
@@ -253,6 +259,100 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		
 		return invitation.getAcceptanceMessage(rival, fightChallenge);
 	}
+	
+	@RequestMapping(value = "/fight/{playerId}/status", method = RequestMethod.GET)
+	public ResponseEntity<PagedResources<Resource<FightChallenge>>> verifyFightChallengeStatus(Pageable pageable,
+			PagedResourcesAssembler<FightChallenge> assembler, @PathVariable Long playerId, HttpServletRequest request){
+		Player loggedPlayer = gameService.loadPlayer(request);
+		Player rival = playerDao.findOne(playerId);
+				
+		//verify players
+		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		}
+		
+		if (rival == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		if(loggedPlayer.equals(rival)) {
+			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+		}
+				
+		Page<FightChallenge> page = fightDao.findAllByPlayers(loggedPlayer, rival, pageable);
+		PagedResources<Resource<FightChallenge>> resources = this.toPagedResources(page, assembler);
+		return new ResponseEntity<PagedResources<Resource<FightChallenge>>>(resources, HttpStatus.OK);
+	}
+	
+	/* ******************************************************************************************
+	 * 
+	 * 										OnTop Challenge
+	 * 
+	 * *****************************************************************************************/
+	
+	@RequestMapping(value = "/ontop", method = RequestMethod.POST)
+	public ResponseEntity<OnTop> challengeEnrollTeamOnTop( HttpServletRequest request){
+		Player loggedPlayer = gameService.loadPlayer(request);
+		
+		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		}
+		
+		//get the player team
+		Membership membership = membershipService.findCurrentMembership(loggedPlayer);
+		
+		if(membership == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		Team team = membership.getTeam();
+		
+		//verify if team is already on top, if not add it on the challenge
+		OnTop onTop = onTopDao.findOneByTeam(team.getId());
+		
+		if(onTop == null) {
+			onTop = new OnTop();
+			onTop.setTeam(team);
+			onTop =  onTopDao.save(onTop);
+			
+			return new ResponseEntity<OnTop>(onTop, HttpStatus.OK);
+		}else {
+			return new ResponseEntity<>(onTop, HttpStatus.FORBIDDEN);
+		}
+	}
+	
+	@RequestMapping(value = "/ontop/status", method = RequestMethod.GET)
+	public ResponseEntity<OnTop> verifyOnTopStatus(HttpServletRequest request){
+		Player loggedPlayer = gameService.loadPlayer(request);
+		
+		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		}
+		
+		//get the player team
+		Membership membership = membershipService.findCurrentMembership(loggedPlayer);
+		
+		if(membership == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		Team team = membership.getTeam();
+		
+		//verify if team is already on top, if not add it on the challenge
+		OnTop onTop = onTopDao.findOneByTeam(team.getId());
+		
+		if(onTop == null) {
+			return new ResponseEntity<OnTop>(HttpStatus.NOT_FOUND);
+		}else {
+			return new ResponseEntity<>(onTop, HttpStatus.FOUND);
+		}
+	}
+	
+	/* ******************************************************************************************
+	 * 
+	 * 										TeamUp Challenge
+	 * 
+	 * *****************************************************************************************/
 	
 	@RequestMapping(value = "/teamup/{teamId}", method = RequestMethod.POST)
 	public ResponseEntity<TeamUpChallenge> enrollTeamUpChallenge(@PathVariable Long teamId, HttpServletRequest request){
@@ -323,83 +423,7 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		
 		return invitation.getTeamAcceptanceMessage(challenge);
 	}
-
-	@RequestMapping(value = "/strike/status", method = RequestMethod.GET)
-	public ResponseEntity<PerformedChallenge> verifyStrikeStatus(HttpServletRequest request){
-		Player loggedPlayer = gameService.loadPlayer(request);
-		
-		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		
-		Challenge challenge = repository.findChallengeByName(ChallengeName.STRIKE.getName());
-		
-		if(challenge == null) {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
-				
-		
-		List<PerformedChallenge> pChallenges = pcDao.findAllIncompletePerformedChallengeByPlayerAndChallenge(loggedPlayer, challenge);
-		
-		
-		//check if player is already enrolled in a challenge
-		if(pChallenges != null && !pChallenges.isEmpty()) {
-			return new ResponseEntity<>(pChallenges.get(0), HttpStatus.FOUND);
-		}else {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
-	}
 	
-	@RequestMapping(value = "/ontop/status", method = RequestMethod.GET)
-	public ResponseEntity<OnTop> verifyOnTopStatus(HttpServletRequest request){
-		Player loggedPlayer = gameService.loadPlayer(request);
-		
-		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		
-		//get the player team
-		Membership membership = membershipService.findCurrentMembership(loggedPlayer);
-		
-		if(membership == null) {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
-		
-		Team team = membership.getTeam();
-		
-		//verify if team is already on top, if not add it on the challenge
-		OnTop onTop = onTopDao.findOneByTeam(team.getId());
-		
-		if(onTop == null) {
-			return new ResponseEntity<OnTop>(HttpStatus.NOT_FOUND);
-		}else {
-			return new ResponseEntity<>(onTop, HttpStatus.FOUND);
-		}
-	}
-	
-	@RequestMapping(value = "/fight/{playerId}/status", method = RequestMethod.GET)
-	public ResponseEntity<PagedResources<Resource<FightChallenge>>> verifyFightChallengeStatus(Pageable pageable,
-			PagedResourcesAssembler<FightChallenge> assembler, @PathVariable Long playerId, HttpServletRequest request){
-		Player loggedPlayer = gameService.loadPlayer(request);
-		Player rival = playerDao.findOne(playerId);
-				
-		//verify players
-		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		
-		if (rival == null) {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
-		
-		if(loggedPlayer.equals(rival)) {
-			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-		}
-				
-		Page<FightChallenge> page = fightDao.findAllByPlayers(loggedPlayer, rival, pageable);
-		PagedResources<Resource<FightChallenge>> resources = this.toPagedResources(page, assembler);
-		return new ResponseEntity<PagedResources<Resource<FightChallenge>>>(resources, HttpStatus.OK);
-	}
 	
 	@RequestMapping(value = "/teamup/{teamId}/status", method = RequestMethod.GET)
 	public ResponseEntity<PagedResources<Resource<TeamUpChallenge>>> verifyTeamUpChallengeStatus(Pageable pageable,
@@ -436,15 +460,4 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		return new ResponseEntity<PagedResources<Resource<TeamUpChallenge>>>(resources, HttpStatus.OK);
 	}
 	
-	
-	/*@RequestMapping(value = "/self/constraint", method = RequestMethod.GET)
-	public ResponseEntity<DurationConstraint> getChallengeTest(HttpServletRequest request) {
-		Player loggedPlayer = gameService.loadPlayer(request);
-		
-		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		return new ResponseEntity<DurationConstraint>(repository.getDurationConstraint(8L), HttpStatus.OK);
-		
-	}*/
 }
