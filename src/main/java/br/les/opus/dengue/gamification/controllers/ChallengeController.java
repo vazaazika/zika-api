@@ -1,5 +1,6 @@
 package br.les.opus.dengue.gamification.controllers;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -40,6 +41,7 @@ import br.les.opus.gamification.repositories.FightChallengeRepository;
 import br.les.opus.gamification.repositories.OnTopRepository;
 import br.les.opus.gamification.repositories.PerformedChallengeRepository;
 import br.les.opus.gamification.repositories.PlayerRepository;
+import br.les.opus.gamification.repositories.StrikeChallengeRepository;
 import br.les.opus.gamification.repositories.TeamRepository;
 import br.les.opus.gamification.repositories.TeamUpChallengeRepository;
 import br.les.opus.gamification.services.ChallengeService;
@@ -61,6 +63,10 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 	
 	@Autowired
 	private PerformedChallengeRepository pcDao;
+	
+	@Autowired
+	private StrikeChallengeRepository strikeDao;
+	
 	
 	@Autowired
 	private ChallengeEntityRepository entityDao;
@@ -96,6 +102,46 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
 		}
 		
+		List<Challenge> challenges = getPlayerChallenges(loggedPlayer);
+		
+		if(challenges.isEmpty()) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		return new ResponseEntity<List<Challenge>>(challenges, HttpStatus.OK);
+	}
+	
+	private List<Challenge> getPlayerChallenges(Player player) {
+		List<Challenge> challenges = new ArrayList<>();
+		
+		if(strikeDao.isPlayerEnrolledInChallenge(player)){
+			challenges.add(repository.findChallengeByName(ChallengeName.STRIKE.getName()));
+		}
+		
+		if(fightDao.isPlayerEnrolledInChallenge(player)){
+			challenges.add(repository.findChallengeByName(ChallengeName.FIGHT.getName()));
+		}
+		
+		if(onTopDao.isPlayerTeamEnrolledInOnTopChallenge(player)){
+			challenges.add(repository.findChallengeByName(ChallengeName.ONTOP.getName()));
+		}
+		
+		if(tucDao.isPlayerEnrolledInChallenge(player)){
+			challenges.add(repository.findChallengeByName(ChallengeName.TEAMUP.getName()));
+		}
+		
+		return challenges;
+	}
+	
+	/*
+	 @RequestMapping(value = "/self", method = RequestMethod.GET)
+	public ResponseEntity<List<Challenge>> getChallengeStatus(HttpServletRequest request) {
+		Player loggedPlayer = gameService.loadPlayer(request);
+		
+		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		}
+		
 		List<Challenge> challenges = repository.findAllOpenedChallengesByPlayer(loggedPlayer.getId());
 		List<Challenge> teamChallenges = repository.findAllOpenedChallengesByPlayerTeam(loggedPlayer);
 		
@@ -115,7 +161,7 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		
 		return new ResponseEntity<List<Challenge>>(challenges, HttpStatus.OK);
 	}
-	
+	 */
 	
 	/* ******************************************************************************************
 	 * 
