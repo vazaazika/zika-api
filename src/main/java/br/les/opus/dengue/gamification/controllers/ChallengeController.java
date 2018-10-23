@@ -1,7 +1,6 @@
 package br.les.opus.dengue.gamification.controllers;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -27,19 +26,16 @@ import br.les.opus.gamification.domain.Membership;
 import br.les.opus.gamification.domain.Player;
 import br.les.opus.gamification.domain.Team;
 import br.les.opus.gamification.domain.challenge.Challenge;
-import br.les.opus.gamification.domain.challenge.ChallengeEntity;
 import br.les.opus.gamification.domain.challenge.ChallengeInvitation;
 import br.les.opus.gamification.domain.challenge.ChallengeName;
 import br.les.opus.gamification.domain.challenge.FightChallenge;
 import br.les.opus.gamification.domain.challenge.InvitationStatus;
 import br.les.opus.gamification.domain.challenge.OnTop;
-import br.les.opus.gamification.domain.challenge.PerformedChallenge;
+import br.les.opus.gamification.domain.challenge.StrikeChallenge;
 import br.les.opus.gamification.domain.challenge.TeamUpChallenge;
-import br.les.opus.gamification.repositories.ChallengeEntityRepository;
 import br.les.opus.gamification.repositories.ChallengeRepository;
 import br.les.opus.gamification.repositories.FightChallengeRepository;
 import br.les.opus.gamification.repositories.OnTopRepository;
-import br.les.opus.gamification.repositories.PerformedChallengeRepository;
 import br.les.opus.gamification.repositories.PlayerRepository;
 import br.les.opus.gamification.repositories.StrikeChallengeRepository;
 import br.les.opus.gamification.repositories.TeamRepository;
@@ -62,14 +58,8 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 	private ChallengeRepository repository;
 	
 	@Autowired
-	private PerformedChallengeRepository pcDao;
-	
-	@Autowired
 	private StrikeChallengeRepository strikeDao;
-	
-	
-	@Autowired
-	private ChallengeEntityRepository entityDao;
+
 	
 	@Autowired
 	private MembershipService membershipService;
@@ -133,35 +123,6 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		return challenges;
 	}
 	
-	/*
-	 @RequestMapping(value = "/self", method = RequestMethod.GET)
-	public ResponseEntity<List<Challenge>> getChallengeStatus(HttpServletRequest request) {
-		Player loggedPlayer = gameService.loadPlayer(request);
-		
-		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
-			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-		}
-		
-		List<Challenge> challenges = repository.findAllOpenedChallengesByPlayer(loggedPlayer.getId());
-		List<Challenge> teamChallenges = repository.findAllOpenedChallengesByPlayerTeam(loggedPlayer);
-		
-		if(challenges == null && teamChallenges == null) {
-			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-		}
-		
-		if(challenges != null && teamChallenges == null) {
-			return new ResponseEntity<List<Challenge>>(challenges, HttpStatus.OK);
-		}
-		
-		if(challenges == null && teamChallenges != null) {
-			return new ResponseEntity<List<Challenge>>(teamChallenges, HttpStatus.OK);
-		}
-		
-		challenges.addAll(teamChallenges);
-		
-		return new ResponseEntity<List<Challenge>>(challenges, HttpStatus.OK);
-	}
-	 */
 	
 	/* ******************************************************************************************
 	 * 
@@ -171,7 +132,7 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 	
 	
 	@RequestMapping(value = "/strike", method = RequestMethod.POST)
-	public ResponseEntity<PerformedChallenge> challengeEnroll(HttpServletRequest request){
+	public ResponseEntity<StrikeChallenge> challengeEnroll(HttpServletRequest request){
 		Player loggedPlayer = gameService.loadPlayer(request);
 		
 		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
@@ -183,36 +144,29 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		if(challenge == null) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
-				
 		
-		List<PerformedChallenge> pChallenges = pcDao.findAllIncompletePerformedChallengeByPlayerAndChallenge(loggedPlayer, challenge);
+		List<StrikeChallenge> challenges = strikeDao.findAllIncompleteStrikeChallengeByPlayer(loggedPlayer);
 		
 		
 		//check if player is already enrolled in a challenge
-		if(pChallenges != null && !pChallenges.isEmpty()) {
-			return new ResponseEntity<>(pChallenges.get(0), HttpStatus.FORBIDDEN);
+		if(challenges != null && !challenges.isEmpty()) {
+			return new ResponseEntity<>(challenges.get(0), HttpStatus.FORBIDDEN);
 		}
 		
 		//enroll the player into the challenge
-		return enroll(loggedPlayer, challenge);
+		return enroll(loggedPlayer);
 	}
 	
-	private ResponseEntity<PerformedChallenge> enroll(Player player, Challenge challenge){
-		PerformedChallenge pfc = new PerformedChallenge();
-		pfc.setChallenge(challenge);
-		pfc = pcDao.save(pfc);
+	private ResponseEntity<StrikeChallenge> enroll(Player player){
+		StrikeChallenge strike = new StrikeChallenge(player);
 		
-		ChallengeEntity entity = new ChallengeEntity(player.getId(), ChallengeEntity.PLAYERTYPE);
-		entity.setPerformedChallenge(pfc);
-		entity = entityDao.save(entity);
+		strike = strikeDao.save(strike);
 		
-		pfc.setEntities(Arrays.asList(entity));
-		
-		return new ResponseEntity<PerformedChallenge>(pfc, HttpStatus.OK);
+		return new ResponseEntity<StrikeChallenge>(strike, HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "/strike/status", method = RequestMethod.GET)
-	public ResponseEntity<PerformedChallenge> verifyStrikeStatus(HttpServletRequest request){
+	public ResponseEntity<StrikeChallenge> verifyStrikeStatus(HttpServletRequest request){
 		Player loggedPlayer = gameService.loadPlayer(request);
 		
 		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
@@ -226,7 +180,7 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		}
 				
 		
-		List<PerformedChallenge> pChallenges = pcDao.findAllIncompletePerformedChallengeByPlayerAndChallenge(loggedPlayer, challenge);
+		List<StrikeChallenge> pChallenges = strikeDao.findAllIncompleteStrikeChallengeByPlayer(loggedPlayer);
 		
 		
 		//check if player is already enrolled in a challenge
