@@ -338,7 +338,7 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		
 		Team team = membership.getTeam();
 		
-		//verify if team is already on top, if not add it on the challenge
+		//verify if team is already on top challenge
 		OnTop onTop = onTopDao.findOneByTeam(team.getId());
 		
 		if(onTop == null) {
