@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.annotation.JsonView;
 
+import br.les.opus.commons.persistence.PagingSortingFilteringRepository;
+import br.les.opus.commons.rest.controllers.ReadOnlyController;
 import br.les.opus.dengue.core.json.View;
 import br.les.opus.gamification.domain.Badge;
 import br.les.opus.gamification.domain.Membership;
@@ -28,7 +30,7 @@ import br.les.opus.gamification.services.MembershipService;
 @RestController
 @Transactional
 @RequestMapping("/game/player")
-public class PlayerController {
+public class PlayerController extends ReadOnlyController<Player>{
 	
 	@Autowired
 	private BadgeRepository badgeDao;
@@ -49,6 +51,16 @@ public class PlayerController {
 		List<Badge> badges = badgeDao.findAllWithProgressions(player);
 		return new ResponseEntity<>(badges, HttpStatus.OK);
 	}
+	
+	/*@RequestMapping(value="all", method = RequestMethod.GET) 
+	public ResponseEntity<PagedResources<Resource<TeamUpChallenge>>> findAllPlayers(HttpServletRequest request) {
+		Player player = gameService.loadPlayer(request);
+		
+		List<Badge> badges = badgeDao.findAllWithProgressions(player);
+		return new ResponseEntity<>(badges, HttpStatus.OK);
+	}*/
+	
+	
 	
 	@RequestMapping(value="{playerId}/badges", method = RequestMethod.GET) 
 	public ResponseEntity< List<Badge> > findAllBadgesAndProgressionsPlayer(
@@ -102,4 +114,11 @@ public class PlayerController {
 		}
 		return new ResponseEntity<>(playerInfo, HttpStatus.OK);
 	}
+
+	@Override
+	protected PagingSortingFilteringRepository<Player, Long> getRepository() {
+		// TODO Auto-generated method stub
+		return playerDao;
+	}
+	
 }
