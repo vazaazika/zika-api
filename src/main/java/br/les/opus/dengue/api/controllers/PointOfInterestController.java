@@ -8,7 +8,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
-import br.les.opus.dengue.core.domain.enumeration.PoiStatus;
+import br.les.opus.dengue.core.domain.*;
+import br.les.opus.dengue.core.repositories.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
@@ -18,7 +19,6 @@ import org.springframework.hateoas.PagedResources;
 import org.springframework.hateoas.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
@@ -42,29 +42,21 @@ import br.les.opus.commons.rest.controllers.AbstractCRUDController;
 import br.les.opus.commons.rest.exceptions.ValidationException;
 import br.les.opus.commons.rest.geo.LatLng;
 import br.les.opus.dengue.api.builders.FeatureCollectionBuilder;
-import br.les.opus.dengue.core.domain.Picture;
-import br.les.opus.dengue.core.domain.PoiComment;
-import br.les.opus.dengue.core.domain.PoiCommentVote;
-import br.les.opus.dengue.core.domain.PoiVote;
-import br.les.opus.dengue.core.domain.PointOfInterest;
-import br.les.opus.dengue.core.domain.Vote;
 import br.les.opus.dengue.core.fields.FieldValue;
 import br.les.opus.dengue.core.json.View;
-import br.les.opus.dengue.core.repositories.PictureRepository;
-import br.les.opus.dengue.core.repositories.PoiCommentRepository;
-import br.les.opus.dengue.core.repositories.PoiCommentVoteRepository;
-import br.les.opus.dengue.core.repositories.PoiVoteRepository;
-import br.les.opus.dengue.core.repositories.PointOfInterestRepository;
 import br.les.opus.dengue.core.services.VoteService;
 import br.les.opus.gamification.services.PerformedTaskService;
 
 @Controller
 @Transactional
 @RequestMapping("/poi")
-public class PointOfInterestController extends AbstractCRUDController<PointOfInterest> {
+public class PointOfInterestController extends AbstractCRUDController<PointOfInterest>{
 
 	@Autowired
 	private PointOfInterestRepository poiRepository;
+
+	@Autowired
+	private PoiStatusUpdateRepository poiStatusUpdateRepository;
 
 	@Autowired
 	private PictureRepository documentRepository;
@@ -118,19 +110,13 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 			Pageable pageable,
 			PagedResourcesAssembler<PointOfInterest> assembler,
 			@RequestParam(value = "filter", required = false) List<String> stringClause) {
-
-//		SimpleMailMessage message = new SimpleMailMessage();
-//		message.setTo("anderson.jose.so@gmail.com");
-//		message.setSubject("teste");
-//		message.setText("agora");
-//		javaMailSender.send(message);
 		return super.findAll(pageable, assembler, stringClause);
 	}
 
 
 	@Override
 	@JsonView(View.PoiDetails.class)
-	@RequestMapping(value = "/{id}", method = RequestMethod.GET)
+	@RequestMapping(value="/{id}",method=RequestMethod.GET)
 	public ResponseEntity<PointOfInterest> findOne(@PathVariable Long id, HttpServletRequest request) {
 
 		logger.info("Recuperando objeto com id: " + id);
@@ -160,7 +146,6 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 			filter = new Filter(stringClause, super.getEntityClass());
 		}
 		List<PointOfInterest> pois = poiRepository.findAllPlain(pageable, filter);
-
 		FeatureCollectionBuilder builder = new FeatureCollectionBuilder();
 		builder.addPointsOfInterest(pois);
 		FeatureCollection featureCollection = builder.build();
@@ -177,7 +162,6 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 			newObject.setUser(token.getUser());
 		}
 
-
 		if (newObject.getFieldValues() != null) {
 			for (FieldValue value : newObject.getFieldValues()) {
 				value.setPoi(newObject);
@@ -187,8 +171,6 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		List<Picture> documents = newObject.getPictures();
 		newObject.setPictures(new ArrayList<Picture>());
 		newObject.getLocation().setSRID(LatLng.GOOGLE_SRID);
-		newObject.setPoiStatus (PoiStatus.OPEN);
-
 		ResponseEntity<PointOfInterest> responseEntity = super.insert(newObject, result, response, request);
 
 		/**
@@ -204,7 +186,7 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		return responseEntity;
 	}
 
-	@RequestMapping(value = "/{id}", method = RequestMethod.PUT)
+	@RequestMapping(value="/{id}", method=RequestMethod.PUT)
 	public ResponseEntity<PointOfInterest> updateOne(@RequestBody PointOfInterest poi,
 													 @PathVariable Long id, BindingResult result, HttpServletRequest request) {
 
@@ -219,7 +201,7 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		 * The user only will be able to change a point of interest if he is root or owner
 		 * of the point of interest
 		 */
-		if (user.isRoot() || user.equals(targetPoi.getUser())) {
+		if (user.isRoot() || user.equals(targetPoi.getUser()) ) {
 			poi.getLocation().setSRID(LatLng.GOOGLE_SRID);
 			poi.setDate(new Date());
 			poi.setPublished(true);
@@ -269,8 +251,8 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 
 	@JsonView(View.Summary.class)
 	@RequestMapping(value = "{poiId}/comment", method = RequestMethod.GET)
-	public ResponseEntity<PagedResources<Resource<PoiComment>>> findAllComments(Pageable pageable,
-																				PagedResourcesAssembler<PoiComment> assembler, @PathVariable Long poiId, HttpServletRequest request) {
+	public ResponseEntity< PagedResources<Resource<PoiComment>> > findAllComments(Pageable pageable,
+																				  PagedResourcesAssembler<PoiComment> assembler, @PathVariable Long poiId, HttpServletRequest request) {
 
 		logger.info("Listando todos os valores");
 
@@ -315,8 +297,7 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		return new ResponseEntity<>(vote, HttpStatus.OK);
 	}
 
-
-	@RequestMapping(value="{id}/statusToInAnalysis", method=RequestMethod.PUT)
+	@RequestMapping(value="{id}/statusToInAnalysis", method= RequestMethod.PUT)
 	public ResponseEntity<PointOfInterest> updatePoiStatusTypeToInAnalysis(@RequestBody PointOfInterest poi,
 																		   @PathVariable Long id, BindingResult result, HttpServletRequest request) {
 		PointOfInterest targetPoi = poiRepository.findOne(id);
@@ -326,20 +307,14 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		Token token = tokenService.getAuthenticatedUser(request);
 		User user = token.getUser();
 		/**
-		 * The user only will be able to change a point of interest if he is root or owner
-		 * of the point of interest
+		 * The agent only will be able to change the status a point of interest
 		 */
-		if (user.isRoot() || user.isHealthAgent() ) {
-			poi.getLocation().setSRID(LatLng.GOOGLE_SRID);
-			poi.setDate(new Date());
-			poi.setPublished(true);
-			if (poi.getPoiStatus().equals(PoiStatus.OPEN)){
-				poi.setPoiStatus(PoiStatus.IN_ANALYSIS);
+		if (user.isHealthAgent() ) {
+			if (poi.getPoiStatusUpdate().getId().equals(PoiStatusUpdateType.REPORTED)){
+			//	poi.getPoiStatusUpdateType().setId(PoiStatusUpdateType.IN_ANALYSIS);
 			}
-			if (user.equals(targetPoi.getUser())) {
-				poi.setUser(user);
-			}
-			logger.info("Alterando status de aberto para em analise " + poi);
+
+			logger.info("hange the poi status from reported to in analysis " + poi);
 			return super.updateOne(poi, id, result, request);
 		} else {
 			return new ResponseEntity<PointOfInterest>(HttpStatus.UNAUTHORIZED);
@@ -359,20 +334,22 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		 * The user only will be able to change a point of interest if he is root or owner
 		 * of the point of interest
 		 */
-		if (user.isRoot() || user.isHealthAgent() ) {
-			poi.getLocation().setSRID(LatLng.GOOGLE_SRID);
-			poi.setDate(new Date());
-			poi.setPublished(true);
-			if(poi.getPoiStatus().equals(PoiStatus.IN_ANALYSIS)){
-				poi.setPoiStatus(PoiStatus.TREATED);
+		if (user.isHealthAgent()) {
+		//	if (poi.getPoiStatusUpdateType().getId().equals(PoiStatusUpdateType.IN_ANALYSIS)){
+		//		poi.getPoiStatusUpdateType().setId(PoiStatusUpdateType.TREATED);
 			}
-			if (user.equals(targetPoi.getUser())) {
-				poi.setUser(user);
-			}
-			logger.info("Alterando status de em analise para tratrado " + poi);
+
+			logger.info("Change the poi status from in analysis to treated " + poi);
 			return super.updateOne(poi, id, result, request);
 		} else {
 			return new ResponseEntity<PointOfInterest>(HttpStatus.UNAUTHORIZED);
 		}
 	}
+
+
+
+
+
+
+
 }

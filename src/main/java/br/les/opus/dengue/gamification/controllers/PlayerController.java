@@ -31,10 +31,10 @@ public class PlayerController {
 	
 	@Autowired
 	private GamificationService gameService;
-	
+
 	@Autowired
 	private PlayerRepository playerDao;
-	
+
 	@Autowired
 	private MembershipService membershipService;
 
