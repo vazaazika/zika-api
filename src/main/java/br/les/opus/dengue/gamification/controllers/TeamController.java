@@ -87,7 +87,7 @@ public class TeamController extends AbstractCRUDController<Team> {
 	}
 	
 	@RequestMapping(value = "{teamId}/members/{playerId}", method = RequestMethod.DELETE)
-	public ResponseEntity<Void> removeMember(@PathVariable Long playerId, @PathVariable Long teamId, HttpServletRequest request) {
+	public ResponseEntity<Player> removeMember(@PathVariable Long playerId, @PathVariable Long teamId, HttpServletRequest request) {
 		Player loggedPlayer = gameService.loadPlayer(request);
 		Player player = playerDao.findOne(playerId);
 		if (!loggedPlayer.equals(player) && !loggedPlayer.isRoot()) {
@@ -100,11 +100,12 @@ public class TeamController extends AbstractCRUDController<Team> {
 		}
 		
 		membershipService.removeMember(team, player);
-		return new ResponseEntity<>(HttpStatus.OK);
+		
+		return new ResponseEntity<>(player, HttpStatus.OK);
 	}
 	
 	@RequestMapping(value = "{teamId}/members/self", method = RequestMethod.DELETE)
-	public ResponseEntity<Void> removeMemberSelf(@PathVariable Long teamId, HttpServletRequest request) {
+	public ResponseEntity<Player> removeMemberSelf(@PathVariable Long teamId, HttpServletRequest request) {
 		Player loggedPlayer = gameService.loadPlayer(request);
 		return removeMember(loggedPlayer.getId(), teamId, request);
 	}

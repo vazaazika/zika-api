@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import br.les.opus.auth.core.domain.Token;
+import br.les.opus.auth.core.domain.TokenPlayer;
 import br.les.opus.auth.core.domain.User;
 import br.les.opus.auth.core.repositories.TokenRepository;
 import br.les.opus.auth.core.repositories.UserRepository;
@@ -22,6 +23,10 @@ import br.les.opus.auth.core.services.DatabaseAuthenticationProvider;
 import br.les.opus.auth.core.services.TokenService;
 import br.les.opus.auth.core.services.UserService;
 import br.les.opus.auth.core.services.UsernamePasswordAuthenticationTokenBuilder;
+import br.les.opus.gamification.domain.Membership;
+import br.les.opus.gamification.domain.Player;
+import br.les.opus.gamification.repositories.PlayerRepository;
+import br.les.opus.gamification.services.MembershipService;
 
 @RestController
 @Transactional
@@ -46,10 +51,16 @@ public class AuthenticationController {
 	@Autowired
 	private TokenService tokenService;
 	
+	@Autowired
+	private PlayerRepository playerDao;
+	
+	@Autowired
+	private MembershipService membershipService;
+	
 	private Logger logger = Logger.getLogger(getClass());
 	
 	@RequestMapping(method=RequestMethod.GET) 
-	public ResponseEntity<Token> performLogin(HttpServletRequest request, 
+	public ResponseEntity<TokenPlayer> performLogin(HttpServletRequest request, 
 			@RequestParam(required=false, defaultValue = "false") Boolean longLasting) {
 		try {
 			UsernamePasswordAuthenticationToken authRequest = authRequestBuilder.build(request);
@@ -66,9 +77,31 @@ public class AuthenticationController {
 
 			userService.loadRolesAndResorces(user);
 			tokenService.removeUnusedTokens(user);
-			return new ResponseEntity<Token>(token, HttpStatus.CREATED);
+			
+			
+			TokenPlayer tokenPlayer = new TokenPlayer(authRequest);
+			tokenPlayer.setUser(user);
+			tokenPlayer.setLongLasting(longLasting);
+			
+			Player player = playerDao.findOne(user.getId());
+			
+			tokenPlayer.setPlayer(player);
+			
+			Membership membership = membershipService.findCurrentMembership(player);
+			
+			/*
+			 * We use the TokenPlayer here to avoid Infinite Recursion
+			 * It's no the most elegant way to do it, but it works
+			 */
+			
+			if (membership != null) {
+				tokenPlayer.setTeam(membership.getTeam());
+			}
+			
+			
+			return new ResponseEntity<TokenPlayer>(tokenPlayer, HttpStatus.CREATED);
 		} catch (AuthenticationException e) {
-			return new ResponseEntity<Token>(HttpStatus.UNAUTHORIZED);
+			return new ResponseEntity<TokenPlayer>(HttpStatus.UNAUTHORIZED);
 		}
 	}
 	
