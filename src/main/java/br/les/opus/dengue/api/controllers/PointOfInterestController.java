@@ -6,8 +6,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
+import br.les.opus.auth.core.domain.Device;
 import br.les.opus.dengue.core.domain.*;
 import br.les.opus.dengue.core.repositories.*;
+import br.les.opus.gamification.services.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
@@ -73,6 +75,10 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 
 	@Autowired
 	private VoteService voteService;
+
+	@Autowired
+	private NotificationService notificationService;
+
 
 	@Autowired
 	private PoiVoteRepository poiVoteRepository;
@@ -312,12 +318,25 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 				poi.getPoiStatusUpdate().getType().setId(PoiStatusUpdateType.IN_ANALYSIS);
 			}
 
+			//Notifications
+			if(user.getDevices()!=null) {
+				Map<String, String> mapa = new HashMap<>();
+				mapa.put("type", "POIStatusUpdate");
+				mapa.put("message", "POI "+poi.getDescription()+"Status is updating...");
+				mapa.put("id", "" + poi.getId());
+
+				for(Device dev: poi.getUser().getDevices())
+					notificationService.sendNotificationId(mapa, dev.getToken());
+			}
+
 			logger.info("hange the poi status from reported to in analysis " + poi);
 			return super.updateOne(poi, id, result, request);
 		} else {
 			return new ResponseEntity<PointOfInterest>(HttpStatus.UNAUTHORIZED);
 		}
 	}
+
+
 	@RequestMapping(value="{id}/statusToTreated", method=RequestMethod.PUT)
 	public ResponseEntity<PointOfInterest> updatePoiStatusTypeToTreated(@RequestBody PointOfInterest poi,
 																		@PathVariable Long id, BindingResult result, HttpServletRequest request) {
@@ -337,7 +356,16 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 				poi.getPoiStatusUpdate().getType().setId(PoiStatusUpdateType.TREATED);
 			}
 
+			//messages
+			if(user.getDevices()!=null) {
+				Map<String, String> mapa = new HashMap<>();
+				mapa.put("type", "POIStatusUpdate");
+				mapa.put("message", "POI "+poi.getDescription()+" Status is updating...");
+				mapa.put("id", "" + poi.getId());
 
+				for(Device dev: poi.getUser().getDevices())
+					notificationService.sendNotificationId(mapa, dev.getToken());
+			}
 
 			logger.info("Change the poi status from in analysis to treated " + poi);
 			return super.updateOne(poi, id, result, request);
@@ -346,7 +374,6 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		}
 
 	}
-
 
 
 

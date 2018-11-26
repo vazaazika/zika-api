@@ -8,6 +8,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
+import br.les.opus.auth.core.domain.*;
+import br.les.opus.auth.core.services.DeviceService;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -28,10 +30,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.les.opus.auth.core.domain.Role;
-import br.les.opus.auth.core.domain.Token;
-import br.les.opus.auth.core.domain.User;
-import br.les.opus.auth.core.domain.UserRole;
 import br.les.opus.auth.core.repositories.RoleRepository;
 import br.les.opus.auth.core.repositories.UserRepository;
 import br.les.opus.auth.core.repositories.UserRoleRepository;
@@ -61,6 +59,8 @@ public class UserCrudController extends AbstractCRUDController<User>{
 	
 	@Autowired
 	private UserService userService;
+
+	private DeviceService deviceService;
 	
 	@Override
 	protected User doFiltering(User user) {
@@ -237,6 +237,26 @@ public class UserCrudController extends AbstractCRUDController<User>{
 
 		return new ResponseEntity<User>(user, HttpStatus.OK);
 	}
+
+
+	@RequestMapping(value = "/device", method=RequestMethod.PUT)
+	public ResponseEntity<User> insertDevice(HttpServletRequest request, @RequestParam String tokenDevice) {
+
+		Token token = tokenService.getAuthenticatedUser(request);
+		if (token == null || token.getUser() == null) {
+			return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
+		}
+
+		User user = token.getUser();
+
+		Device device = deviceService.insertDevice(user,tokenDevice);
+		user.getDevices().add(device);
+		repository.save(user);
+
+		return new ResponseEntity<User>(HttpStatus.OK);
+	}
+
+
 
 
 
