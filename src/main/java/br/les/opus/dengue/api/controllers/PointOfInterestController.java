@@ -1,8 +1,6 @@
 package br.les.opus.dengue.api.controllers;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -310,8 +308,8 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		 * The agent only will be able to change the status a point of interest
 		 */
 		if (user.isHealthAgent() ) {
-			if (poi.getPoiStatusUpdate().getId().equals(PoiStatusUpdateType.REPORTED)){
-			//	poi.getPoiStatusUpdateType().setId(PoiStatusUpdateType.IN_ANALYSIS);
+			if (poi.getPoiStatusUpdate().getType().equals(PoiStatusUpdateType.REPORTED)){
+				poi.getPoiStatusUpdate().getType().setId(PoiStatusUpdateType.IN_ANALYSIS);
 			}
 
 			logger.info("hange the poi status from reported to in analysis " + poi);
@@ -320,7 +318,6 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 			return new ResponseEntity<PointOfInterest>(HttpStatus.UNAUTHORIZED);
 		}
 	}
-
 	@RequestMapping(value="{id}/statusToTreated", method=RequestMethod.PUT)
 	public ResponseEntity<PointOfInterest> updatePoiStatusTypeToTreated(@RequestBody PointOfInterest poi,
 																		@PathVariable Long id, BindingResult result, HttpServletRequest request) {
@@ -334,19 +331,21 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		 * The user only will be able to change a point of interest if he is root or owner
 		 * of the point of interest
 		 */
+
 		if (user.isHealthAgent()) {
-		//	if (poi.getPoiStatusUpdateType().getId().equals(PoiStatusUpdateType.IN_ANALYSIS)){
-		//		poi.getPoiStatusUpdateType().setId(PoiStatusUpdateType.TREATED);
+			if (poi.getPoiStatusUpdate().getType().equals(PoiStatusUpdateType.IN_ANALYSIS)){
+				poi.getPoiStatusUpdate().getType().setId(PoiStatusUpdateType.TREATED);
 			}
+
+
 
 			logger.info("Change the poi status from in analysis to treated " + poi);
 			return super.updateOne(poi, id, result, request);
 		} else {
 			return new ResponseEntity<PointOfInterest>(HttpStatus.UNAUTHORIZED);
 		}
+
 	}
-
-
 
 
 
