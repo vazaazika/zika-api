@@ -86,7 +86,6 @@ public class FeedbackController extends AbstractCRUDController<Feedback> {
                     notificationService.sendNotificationId(mapa, dev.getToken());
             }
 
-
             return new ResponseEntity<>(HttpStatus.CREATED);
 
         } else {
