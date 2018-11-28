@@ -175,6 +175,9 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		List<Picture> documents = newObject.getPictures();
 		newObject.setPictures(new ArrayList<Picture>());
 		newObject.getLocation().setSRID(LatLng.GOOGLE_SRID);
+		PoiStatusUpdate  poiStatusUpdate = poiStatusUpdateRepository.findOne(PoiStatusUpdateType.REPORTED);
+		newObject.setPoiStatusUpdate(poiStatusUpdate);
+
 		ResponseEntity<PointOfInterest> responseEntity = super.insert(newObject, result, response, request);
 
 		/**
@@ -314,14 +317,14 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		 * The agent only will be able to change the status a point of interest
 		 */
 		if (user.isHealthAgent() ) {
-			if (poi.getPoiStatusUpdate().getType().equals(PoiStatusUpdateType.REPORTED)){
+			if (poi.getPoiStatusUpdate().getType().getId().equals(PoiStatusUpdateType.REPORTED)){
 				poi.getPoiStatusUpdate().getType().setId(PoiStatusUpdateType.IN_ANALYSIS);
 			}
 
 			//Notifications
 			if(user.getDevices()!=null) {
 				Map<String, String> mapa = new HashMap<>();
-				mapa.put("type", "POIStatusUpdate");
+				mapa.put("type", Constant.POI_STATUS_UPDATE);
 				mapa.put("message", "POI "+poi.getDescription()+"Status is updating...");
 				mapa.put("id", "" + poi.getId());
 
@@ -352,14 +355,14 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		 */
 
 		if (user.isHealthAgent()) {
-			if (poi.getPoiStatusUpdate().getType().equals(PoiStatusUpdateType.IN_ANALYSIS)){
+			if (poi.getPoiStatusUpdate().getType().getId().equals(PoiStatusUpdateType.IN_ANALYSIS)){
 				poi.getPoiStatusUpdate().getType().setId(PoiStatusUpdateType.TREATED);
 			}
 
 			//messages
 			if(user.getDevices()!=null) {
 				Map<String, String> mapa = new HashMap<>();
-				mapa.put("type", "POIStatusUpdate");
+				mapa.put("type", Constant.POI_STATUS_UPDATE);
 				mapa.put("message", "POI "+poi.getDescription()+" Status is updating...");
 				mapa.put("id", "" + poi.getId());
 

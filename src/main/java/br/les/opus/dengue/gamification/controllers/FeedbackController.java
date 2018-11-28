@@ -9,6 +9,7 @@ import br.les.opus.auth.core.services.TokenService;
 import br.les.opus.commons.persistence.PagingSortingFilteringRepository;
 import br.les.opus.commons.rest.controllers.AbstractCRUDController;
 import br.les.opus.commons.rest.exceptions.ValidationException;
+import br.les.opus.dengue.api.controllers.Constant;
 import br.les.opus.dengue.core.domain.PointOfInterest;
 import br.les.opus.dengue.core.repositories.PointOfInterestRepository;
 import br.les.opus.gamification.domain.feedback.Feedback;
@@ -33,9 +34,7 @@ import java.util.*;
 @RequestMapping("/feedback-poi")
 public class FeedbackController extends AbstractCRUDController<Feedback> {
 
-
     protected Logger logger = Logger.getLogger(getEntityClass());
-
 
     @Autowired
     private PointOfInterestRepository poiRepository;
@@ -76,11 +75,10 @@ public class FeedbackController extends AbstractCRUDController<Feedback> {
             logger.info("Inserindo novo feedback " + informationQuality);
             FeedbackPoiInformationQuality received = feedbackService.saveFeedbackInformationQuality(informationQuality);
 
-
             //messages
             if(poi.getUser().getDevices()!=null) {
                 Map<String, String> mapa = new HashMap<>();
-                mapa.put("type", "QualityInformation");
+                mapa.put("type", Constant.POI_QUALITY_INFORMATION);
                 mapa.put("message", "New information Quality: "+informationQuality.getBody());
                 mapa.put("id", "" + received.getId());
 
