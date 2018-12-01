@@ -240,9 +240,11 @@ public class UserCrudController extends AbstractCRUDController<User>{
 
 
 	@RequestMapping(value = "/device", method=RequestMethod.PUT)
-	public ResponseEntity<User> insertDevice(HttpServletRequest request, @RequestParam String tokenDevice) {
+	public ResponseEntity<User> insertDevice(HttpServletRequest request, @RequestParam(value = "token-device", required = false) String tokenDevice) {
 
-		Token token = tokenService.getAuthenticatedUser(request);
+
+Token token = tokenService.getAuthenticatedUser(request);
+
 		if (token == null || token.getUser() == null) {
 			return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
 		}
