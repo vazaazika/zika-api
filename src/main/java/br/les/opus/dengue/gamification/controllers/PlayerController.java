@@ -37,10 +37,10 @@ public class PlayerController extends ReadOnlyController<Player>{
 	
 	@Autowired
 	private GamificationService gameService;
-
+	
 	@Autowired
 	private PlayerRepository playerDao;
-
+	
 	@Autowired
 	private MembershipService membershipService;
 

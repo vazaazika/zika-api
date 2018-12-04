@@ -83,6 +83,7 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 	@Autowired
 	private PoiVoteRepository poiVoteRepository;
 
+
 	@Override
 	protected PagingSortingFilteringRepository<PointOfInterest, Long> getRepository() {
 		return poiRepository;
@@ -175,8 +176,19 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		List<Picture> documents = newObject.getPictures();
 		newObject.setPictures(new ArrayList<Picture>());
 		newObject.getLocation().setSRID(LatLng.GOOGLE_SRID);
-		PoiStatusUpdate  poiStatusUpdate = poiStatusUpdateRepository.findOne(PoiStatusUpdateType.REPORTED);
+
+
+		PoiStatusUpdate poiStatusUpdate = new PoiStatusUpdate();
+		PoiStatusUpdateType statusUpdateType = new PoiStatusUpdateType();
+		statusUpdateType.setId(PoiStatusUpdateType.REPORTED);
+		poiStatusUpdate.setType(statusUpdateType);
+
+		poiStatusUpdate.setPoi(newObject);
+		poiStatusUpdate.setDate(new Date());
+		poiStatusUpdate.setUser(newObject.getUser());
+
 		newObject.setPoiStatusUpdate(poiStatusUpdate);
+
 
 		ResponseEntity<PointOfInterest> responseEntity = super.insert(newObject, result, response, request);
 
@@ -244,6 +256,8 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		newObject.setDate(new Date());
 		newObject.setDownVoteCount(0);
 		newObject.setUpVoteCount(0);
+
+
 		Token token = tokenService.getAuthenticatedUser(request);
 		newObject.setUser(token.getUser());
 		if (result.hasErrors()) {
@@ -304,81 +318,119 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		return new ResponseEntity<>(vote, HttpStatus.OK);
 	}
 
-	@RequestMapping(value="{id}/statusToInAnalysis", method= RequestMethod.PUT)
+	@RequestMapping(value="{id}/status-to-in-analysis", method= RequestMethod.PUT)
 	public ResponseEntity<PointOfInterest> updatePoiStatusTypeToInAnalysis(@RequestBody PointOfInterest poi,
 																		   @PathVariable Long id, BindingResult result, HttpServletRequest request) {
+
 		PointOfInterest targetPoi = poiRepository.findOne(id);
+
 		if (targetPoi == null) {
 			return new ResponseEntity<PointOfInterest>(HttpStatus.NOT_FOUND);
 		}
+
 		Token token = tokenService.getAuthenticatedUser(request);
 		User user = token.getUser();
 		/**
 		 * The agent only will be able to change the status a point of interest
 		 */
 		if (user.isHealthAgent() ) {
-			if (poi.getPoiStatusUpdate().getType().getId().equals(PoiStatusUpdateType.REPORTED)){
-				poi.getPoiStatusUpdate().getType().setId(PoiStatusUpdateType.IN_ANALYSIS);
+
+			if(targetPoi.getPoiStatusUpdate() == null){
+
+				PoiStatusUpdate poiStatusUpdate = new PoiStatusUpdate();
+				PoiStatusUpdateType statusUpdateType = new PoiStatusUpdateType();
+				statusUpdateType.setId(PoiStatusUpdateType.IN_ANALYSIS);
+				poiStatusUpdate.setType(statusUpdateType);
+
+				poiStatusUpdate.setPoi(targetPoi);
+				poiStatusUpdate.setDate(new Date());
+				poiStatusUpdate.setUser(targetPoi.getUser());
+
+				targetPoi.setPoiStatusUpdate(poiStatusUpdate);
+
+			}else if (targetPoi.getPoiStatusUpdate().getType().getId() == (PoiStatusUpdateType.REPORTED)){
+				PoiStatusUpdateType psut = new PoiStatusUpdateType();
+				psut.setId(PoiStatusUpdateType.IN_ANALYSIS);
+				targetPoi.getPoiStatusUpdate().setType(psut);
+
+			}else{
+				return new ResponseEntity<PointOfInterest>(HttpStatus.BAD_REQUEST);
 			}
 
 			//Notifications
-			if(user.getDevices()!=null) {
+			if(targetPoi.getUser()!=null && targetPoi.getUser().getDevices()!=null) {
 				Map<String, String> mapa = new HashMap<>();
 				mapa.put("type", Constant.POI_STATUS_UPDATE);
-				mapa.put("message", "POI "+poi.getDescription()+"Status is updating...");
-				mapa.put("id", "" + poi.getId());
+				mapa.put("message", "POI "+targetPoi.getDescription()+"Status is updating...");
+				mapa.put("id", "" + targetPoi.getId());
 
-				for(Device dev: poi.getUser().getDevices())
+				for(Device dev: targetPoi.getUser().getDevices())
 					notificationService.sendNotificationId(mapa, dev.getToken());
 			}
 
-			logger.info("hange the poi status from reported to in analysis " + poi);
-			return super.updateOne(poi, id, result, request);
+			logger.info("hange the poi status from reported to in analysis " + targetPoi);
+			return super.updateOne(targetPoi, id, result, request);
 		} else {
 			return new ResponseEntity<PointOfInterest>(HttpStatus.UNAUTHORIZED);
 		}
 	}
 
 
-	@RequestMapping(value="{id}/statusToTreated", method=RequestMethod.PUT)
+	@RequestMapping(value="{id}/status-to-treated", method=RequestMethod.PUT)
 	public ResponseEntity<PointOfInterest> updatePoiStatusTypeToTreated(@RequestBody PointOfInterest poi,
 																		@PathVariable Long id, BindingResult result, HttpServletRequest request) {
 		PointOfInterest targetPoi = poiRepository.findOne(id);
+
 		if (targetPoi == null) {
 			return new ResponseEntity<PointOfInterest>(HttpStatus.NOT_FOUND);
 		}
+
 		Token token = tokenService.getAuthenticatedUser(request);
 		User user = token.getUser();
 		/**
-		 * The user only will be able to change a point of interest if he is root or owner
-		 * of the point of interest
+		 * The agent only will be able to change the status a point of interest
 		 */
+		if (user.isHealthAgent() ) {
 
-		if (user.isHealthAgent()) {
-			if (poi.getPoiStatusUpdate().getType().getId().equals(PoiStatusUpdateType.IN_ANALYSIS)){
-				poi.getPoiStatusUpdate().getType().setId(PoiStatusUpdateType.TREATED);
+			if(targetPoi.getPoiStatusUpdate() == null){
+
+				PoiStatusUpdate poiStatusUpdate = new PoiStatusUpdate();
+				PoiStatusUpdateType statusUpdateType = new PoiStatusUpdateType();
+				statusUpdateType.setId(PoiStatusUpdateType.TREATED);
+				poiStatusUpdate.setType(statusUpdateType);
+
+				poiStatusUpdate.setPoi(targetPoi);
+				poiStatusUpdate.setDate(new Date());
+				poiStatusUpdate.setUser(targetPoi.getUser());
+
+				targetPoi.setPoiStatusUpdate(poiStatusUpdate);
+
+			}else if (targetPoi.getPoiStatusUpdate().getType().getId() == (PoiStatusUpdateType.IN_ANALYSIS)){
+				PoiStatusUpdateType psut = new PoiStatusUpdateType();
+				psut.setId(PoiStatusUpdateType.TREATED);
+				targetPoi.getPoiStatusUpdate().setType(psut);
+
+			}else{
+				return new ResponseEntity<PointOfInterest>(HttpStatus.BAD_REQUEST);
 			}
 
-			//messages
-			if(user.getDevices()!=null) {
+			//Notifications
+			if(targetPoi.getUser()!=null && targetPoi.getUser().getDevices()!=null) {
 				Map<String, String> mapa = new HashMap<>();
 				mapa.put("type", Constant.POI_STATUS_UPDATE);
-				mapa.put("message", "POI "+poi.getDescription()+" Status is updating...");
-				mapa.put("id", "" + poi.getId());
+				mapa.put("message", "POI "+targetPoi.getDescription()+"Status is updating...");
+				mapa.put("id", "" + targetPoi.getId());
 
-				for(Device dev: poi.getUser().getDevices())
+				for(Device dev: targetPoi.getUser().getDevices())
 					notificationService.sendNotificationId(mapa, dev.getToken());
 			}
 
-			logger.info("Change the poi status from in analysis to treated " + poi);
-			return super.updateOne(poi, id, result, request);
+			logger.info("hange the poi status from reported to in analysis " + targetPoi);
+			return super.updateOne(targetPoi, id, result, request);
 		} else {
 			return new ResponseEntity<PointOfInterest>(HttpStatus.UNAUTHORIZED);
 		}
 
 	}
-
-
-
 
 }

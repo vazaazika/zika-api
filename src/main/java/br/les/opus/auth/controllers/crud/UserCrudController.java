@@ -44,24 +44,25 @@ import br.les.opus.commons.rest.exceptions.ValidationException;
 @Transactional
 @RequestMapping("/user")
 public class UserCrudController extends AbstractCRUDController<User>{
-	
+
 	@Autowired
 	private UserRepository repository;
-	
+
 	@Autowired
 	private RoleRepository roleDao;
-	
+
 	@Autowired
 	private TokenService tokenService;
-	
+
 	@Autowired
 	private UserRoleRepository userRoleDao;
-	
+
 	@Autowired
 	private UserService userService;
 
+	@Autowired
 	private DeviceService deviceService;
-	
+
 	@Override
 	protected User doFiltering(User user) {
 		List<Role> roles = roleDao.findAllByUser(user);
@@ -69,8 +70,8 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		user.setRoles(roles);
 		return super.doFiltering(user);
 	}
-	
-	@RequestMapping(value = "/password", method=RequestMethod.PUT) 
+
+	@RequestMapping(value = "/password", method=RequestMethod.PUT)
 	public ResponseEntity<User> changePassword(HttpServletRequest request, @RequestParam String password) {
 		Token token = tokenService.getAuthenticatedUser(request);
 		if (token == null || token.getUser() == null) {
@@ -81,39 +82,39 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		repository.save(user);
 		return new ResponseEntity<User>(HttpStatus.OK);
 	}
-	
-	@RequestMapping(value = "/{userId}/role", method=RequestMethod.POST) 
+
+	@RequestMapping(value = "/{userId}/role", method=RequestMethod.POST)
 	public ResponseEntity<User> checkTokenValidity(HttpServletRequest request,@RequestBody Role role, @PathVariable Long userId) {
 		User user = repository.findOne(userId);
 		if (user == null) {
 			return new ResponseEntity<User>(HttpStatus.NOT_FOUND);
 		}
-		
+
 		role = roleDao.findOne(role.getId());
 		if (role == null || role.getId() == null) {
 			return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
 		}
-		
+
 		UserRole userRole = new UserRole();
 		userRole.setRole(role);
 		userRole.setUser(user);
 		userRoleDao.save(userRole);
-		
+
 		return new ResponseEntity<User>(HttpStatus.OK);
 	}
-	
-	@RequestMapping(value = "{userId}/role/{roleId}", method=RequestMethod.DELETE) 
+
+	@RequestMapping(value = "{userId}/role/{roleId}", method=RequestMethod.DELETE)
 	public ResponseEntity<User> checkTokenValidity(HttpServletRequest request, @PathVariable Long roleId, @PathVariable Long userId) {
 		User user = repository.findOne(userId);
 		if (user == null) {
 			return new ResponseEntity<User>(HttpStatus.NOT_FOUND);
 		}
-		
+
 		Role role = roleDao.findOne(roleId);
 		if (role == null || role.getId() == null) {
 			return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
 		}
-		
+
 		UserRole userRole = user.findUserRole(role);
 		if (userRole == null) {
 			return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
@@ -124,7 +125,7 @@ public class UserCrudController extends AbstractCRUDController<User>{
 
 	@RequestMapping(method = RequestMethod.POST)
 	public ResponseEntity<User> insert(@RequestBody @Valid User newObject,
-										BindingResult result, HttpServletResponse response, HttpServletRequest request) {
+									   BindingResult result, HttpServletResponse response, HttpServletRequest request) {
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
 		}
@@ -138,8 +139,8 @@ public class UserCrudController extends AbstractCRUDController<User>{
 
 		return new ResponseEntity<User>(newObject, HttpStatus.CREATED);
 	}
-	
-	
+
+
 	@RequestMapping(value = "find-by-username", method = RequestMethod.GET)
 	public ResponseEntity<User> findByUserName(@RequestParam String username) {
 		User user = repository.findByUsername(username);
@@ -148,14 +149,14 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		}
 		return new ResponseEntity<>(user, HttpStatus.OK);
 	}
-	
+
 	@RequestMapping(method = RequestMethod.GET)
-	public ResponseEntity< PagedResources<Resource<User>> > findAll(Pageable pageable, PagedResourcesAssembler<User> assembler, 
-			@RequestParam(value = "filter", required = false) List<String> stringClause) {
-		
-		
+	public ResponseEntity< PagedResources<Resource<User>> > findAll(Pageable pageable, PagedResourcesAssembler<User> assembler,
+																	@RequestParam(value = "filter", required = false) List<String> stringClause) {
+
+
 		logger.info("Listando todos os valores");
-		
+
 		/**
 		 * Cria o objeto de filtro antes de submeter a consulta ao repositório
 		 */
@@ -173,39 +174,39 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		return new ResponseEntity<PagedResources<Resource<User>>>(resources, HttpStatus.OK);
 	}
 
-	@RequestMapping(value="/{id}", method=RequestMethod.PUT) 
-	public ResponseEntity<User> updateOne(@RequestBody User updatingObject, 
-			@PathVariable Long id, BindingResult result, HttpServletRequest request) {
+	@RequestMapping(value="/{id}", method=RequestMethod.PUT)
+	public ResponseEntity<User> updateOne(@RequestBody User updatingObject,
+										  @PathVariable Long id, BindingResult result, HttpServletRequest request) {
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
 		}
-		
+
 		PagingAndSortingRepository<User, Long> repository = getRepository();
 		if (!repository.exists(id)) {
 			return new ResponseEntity<User>(HttpStatus.NOT_FOUND);
 		}
-		
+
 		if (updatingObject.getPassword() != null) {
 			updatingObject.setPassword(DigestUtils.md5Hex(updatingObject.getPassword()));
 		} else {
 			User old = repository.findOne(id);
 			updatingObject.setPassword(old.getPassword());
 		}
-		
+
 		updatingObject.setId(id);
-		
+
 		/*
 		 * Tratamento de validação.
 		 */
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
 		}
-		
+
 		repository.save(updatingObject);
 		return new ResponseEntity<User>(HttpStatus.OK);
 	}
-	
-	@RequestMapping(value = "self", method=RequestMethod.GET) 
+
+	@RequestMapping(value = "self", method=RequestMethod.GET)
 	public ResponseEntity<User> checkTokenValidity(HttpServletRequest request) {
 		Token token = tokenService.getAuthenticatedUser(request);
 		User user = token.getUser();
@@ -240,11 +241,9 @@ public class UserCrudController extends AbstractCRUDController<User>{
 
 
 	@RequestMapping(value = "/device", method=RequestMethod.PUT)
-	public ResponseEntity<User> insertDevice(HttpServletRequest request, @RequestParam(value = "token-device", required = false) String tokenDevice) {
+	public ResponseEntity<User> insertDevice(HttpServletRequest request, @RequestParam(value="token-device", required=true) String tokenDevice) {
 
-
-Token token = tokenService.getAuthenticatedUser(request);
-
+		Token token = tokenService.getAuthenticatedUser(request);
 		if (token == null || token.getUser() == null) {
 			return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
 		}
@@ -257,9 +256,6 @@ Token token = tokenService.getAuthenticatedUser(request);
 
 		return new ResponseEntity<User>(HttpStatus.OK);
 	}
-
-
-
 
 
 	@Override

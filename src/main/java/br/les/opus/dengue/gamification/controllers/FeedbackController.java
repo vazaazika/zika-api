@@ -48,7 +48,7 @@ public class FeedbackController extends AbstractCRUDController<Feedback> {
     @Autowired
     private TokenService tokenService;
 
-    @RequestMapping(value = "{poiId}/qualityInformation", method = RequestMethod.POST)
+    @RequestMapping(value = "{poiId}/quality-information", method = RequestMethod.POST)
     public ResponseEntity<Feedback> createFeedbackQualityInformation(@PathVariable Long poiId, String body,
                                                                      BindingResult result, HttpServletResponse response, HttpServletRequest request) {
 

@@ -27,7 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 @Transactional
 @RequestMapping("/poi-status-update-type")
 public class PoiStatusUpdateTypeController extends AbstractCRUDController<PoiStatusUpdateType> {
-	
+
 	@Autowired
 	private PoiStatusUpdateTypeRepository repository;
 
