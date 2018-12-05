@@ -1,17 +1,20 @@
 package br.les.opus.dengue.gamification.controllers;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Base64;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
+import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -64,6 +67,54 @@ public class BadgeController extends ReadOnlyController<Badge> {
 			return new ResponseEntity<Void>(HttpStatus.INTERNAL_SERVER_ERROR);
 		}
 		return new ResponseEntity<Void>(HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "{id}/thumb/{width}/{height}", method = RequestMethod.GET)
+	public ResponseEntity<Void> getThumb(@PathVariable Long id, HttpServletResponse response, 
+			@PathVariable Integer width, @PathVariable Integer height){
+		try {
+			Badge badge = repository.findOne(id);
+			
+			if (badge == null) {
+				return new ResponseEntity<Void>(HttpStatus.NOT_FOUND);
+			}
+			
+			File file = new File(badge.getImageUrl());
+			String basePath = badge.getImageUrl();
+
+			InputStream inputStream = getScaledInstanceStream(basePath, width, height);
+			IOUtils.copy(inputStream, response.getOutputStream());
+
+			response.setHeader("Content-disposition", "attachment;filename="+ file.getName());
+			response.setContentType("image/png");
+
+			response.flushBuffer();
+		} catch (FileNotFoundException e) {
+			logger.error(e.getMessage(), e);
+			return new ResponseEntity<Void>(HttpStatus.NOT_FOUND);
+		} catch (IOException e) {
+			logger.error(e.getMessage(), e);
+			return new ResponseEntity<Void>(HttpStatus.INTERNAL_SERVER_ERROR);
+		}
+		return new ResponseEntity<Void>(HttpStatus.OK);
+	}
+	
+	@RequestMapping(value = "{id}/thumb/{width}", method = RequestMethod.GET)
+	public ResponseEntity<Void> getThumbByWidth(@PathVariable Long id, HttpServletResponse response, 
+			@PathVariable Integer width){
+		return getThumb(id, response, width, width);
+	}
+	
+	public InputStream getScaledInstanceStream(String basePath, int width, int height) throws IOException {
+		File file = new File(basePath);
+		
+		BufferedImage bufferedImage = ImageIO.read(file);
+		bufferedImage = Scalr.resize(bufferedImage, Scalr.Method.QUALITY, width, Scalr.OP_ANTIALIAS);
+		
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		ImageIO.write(bufferedImage, "png", os);
+		InputStream inputStream = new ByteArrayInputStream(os.toByteArray());
+		return inputStream;
 	}
 	
 	@RequestMapping(value = "{id}/file", method = RequestMethod.GET)
