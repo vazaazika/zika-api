@@ -244,19 +244,28 @@ public class UserCrudController extends AbstractCRUDController<User>{
 	public ResponseEntity<User> insertDevice(HttpServletRequest request, @RequestParam(value="token-device", required=true) String tokenDevice) {
 
 		Token token = tokenService.getAuthenticatedUser(request);
-		if (token == null || token.getUser() == null) {
+
+
+
+		if (token == null || token.getUser() == null)  {
 			return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
 		}
 
 		User user = token.getUser();
 
+		if (deviceService.existDevice(user,tokenDevice) != null){
+
+			return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
+
+		}else{
+
 		Device device = deviceService.insertDevice(user,tokenDevice);
 		user.getDevices().add(device);
 		repository.save(user);
-
+		}
 		return new ResponseEntity<User>(HttpStatus.OK);
-	}
 
+	}
 
 	@Override
 	protected PagingSortingFilteringRepository<User, Long> getRepository() {
