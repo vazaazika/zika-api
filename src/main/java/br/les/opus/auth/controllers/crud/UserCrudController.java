@@ -239,14 +239,14 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		return new ResponseEntity<User>(user, HttpStatus.OK);
 	}
 
-	@RequestMapping(value="/{id}/username", method=RequestMethod.PUT)
-	public ResponseEntity<User> changeUsername(@RequestBody User updatingObject,
+	@RequestMapping(value="/{id}/name", method=RequestMethod.PUT)
+	public ResponseEntity<User> changeName(@RequestBody User updatingObject,
 											   @PathVariable Long id, BindingResult result, HttpServletRequest request) {
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
 		}
 
-		repository.setUsername(id, updatingObject.getUsername());
+		repository.setName(id, updatingObject.getName());
 
 		User user = repository.findOne(id);
 
