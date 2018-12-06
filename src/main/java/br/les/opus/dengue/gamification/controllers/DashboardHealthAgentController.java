@@ -42,15 +42,26 @@ public class DashboardHealthAgentController {
                                                                 Pageable pageable, HttpServletRequest request) {
 
         Token token = tokenService.getAuthenticatedUser(request);
+
         User user = token.getUser();
 
         if (user.isHealthAgent()) {
-            pointOfInterestRepository.findAllPoiByFilters((HealthAgent) user, point, pageable);
+
+            HealthAgent healthAgent = healthAgentService.findById(user);
+
+            if (healthAgent == null){
+                    return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+                }else{
+
+                pointOfInterestRepository.findAllPoiByFilters(healthAgent, point, pageable);
+                return new ResponseEntity<DashboardResults>(HttpStatus.OK);
+
+            }
+
         } else {
             return new ResponseEntity<DashboardResults>(HttpStatus.UNAUTHORIZED);
         }
 
-        return new ResponseEntity<DashboardResults>(HttpStatus.OK);
     }
 
 
