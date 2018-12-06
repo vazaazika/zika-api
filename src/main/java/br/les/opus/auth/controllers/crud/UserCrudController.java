@@ -10,6 +10,8 @@ import javax.validation.Valid;
 
 import br.les.opus.auth.core.domain.*;
 import br.les.opus.auth.core.services.DeviceService;
+import br.les.opus.gamification.domain.HealthAgent;
+import br.les.opus.gamification.services.HealthAgentService;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -62,6 +64,9 @@ public class UserCrudController extends AbstractCRUDController<User>{
 
 	@Autowired
 	private DeviceService deviceService;
+
+	@Autowired
+	private HealthAgentService healthAgentService;
 
 	@Override
 	protected User doFiltering(User user) {
@@ -139,6 +144,32 @@ public class UserCrudController extends AbstractCRUDController<User>{
 
 		return new ResponseEntity<User>(newObject, HttpStatus.CREATED);
 	}
+
+
+
+	@RequestMapping(value="/health-agent", method = RequestMethod.POST)
+	public ResponseEntity<HealthAgent> insertHealthAgent(@RequestBody @Valid HealthAgent newObject, BindingResult result, HttpServletResponse response, HttpServletRequest request) {
+
+		if (result.hasErrors()) {
+			throw new ValidationException(result);
+		}
+
+		if (newObject.getPassword() != null) {
+			newObject.setPassword(DigestUtils.md5Hex(newObject.getPassword()));
+		}
+
+		System.out.println(newObject.toString());
+
+		newObject = healthAgentService.save(newObject);
+
+		Link detail = linkTo(this.getClass()).slash(newObject.getId()).withSelfRel();
+		response.setHeader("Location", detail.getHref());
+
+		newObject = healthAgentService.loadRolesAndResorces(newObject);
+
+		return new ResponseEntity<HealthAgent>(newObject, HttpStatus.CREATED);
+	}
+
 
 
 	@RequestMapping(value = "find-by-username", method = RequestMethod.GET)
