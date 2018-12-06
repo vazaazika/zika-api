@@ -60,7 +60,7 @@ public class AuthenticationController {
 	private Logger logger = Logger.getLogger(getClass());
 
 	@RequestMapping(method=RequestMethod.GET)
-	public ResponseEntity<TokenPlayer> performLogin(HttpServletRequest request,
+	public ResponseEntity<Token> performLogin(HttpServletRequest request,
 			@RequestParam(required=false, defaultValue = "false") Boolean longLasting) {
 		try {
 			UsernamePasswordAuthenticationToken authRequest = authRequestBuilder.build(request);
@@ -79,29 +79,34 @@ public class AuthenticationController {
             tokenService.removeUnusedTokens(user);
 
 
-            TokenPlayer tokenPlayer = new TokenPlayer(authRequest);
-            tokenPlayer.setUser(user);
-            tokenPlayer.setLongLasting(longLasting);
+            if (user.isHealthAgent()) {
+                return new ResponseEntity<Token>(token, HttpStatus.CREATED);
+            }else {
 
-            Player player = playerDao.findOne(user.getId());
+                TokenPlayer tokenPlayer = new TokenPlayer(authRequest);
+                tokenPlayer.setUser(user);
+                tokenPlayer.setLongLasting(longLasting);
 
-            tokenPlayer.setPlayer(player);
+                Player player = playerDao.findOne(user.getId());
 
-            Membership membership = membershipService.findCurrentMembership(player);
+                tokenPlayer.setPlayer(player);
 
-            /*
-             * We use the TokenPlayer here to avoid Infinite Recursion
-             * It's no the most elegant way to do it, but it works
-             */
+                Membership membership = membershipService.findCurrentMembership(player);
 
-            if (membership != null) {
-                tokenPlayer.setTeam(membership.getTeam());
+                /*
+                 * We use the TokenPlayer here to avoid Infinite Recursion
+                 * It's no the most elegant way to do it, but it works
+                 */
+
+                if (membership != null) {
+                    tokenPlayer.setTeam(membership.getTeam());
+                }
+
+
+                return new ResponseEntity<Token>(tokenPlayer, HttpStatus.CREATED);
             }
-
-
-            return new ResponseEntity<TokenPlayer>(tokenPlayer, HttpStatus.CREATED);
         } catch (AuthenticationException e) {
-            return new ResponseEntity<TokenPlayer>(HttpStatus.UNAUTHORIZED);
+            return new ResponseEntity<Token>(HttpStatus.UNAUTHORIZED);
         }
     }
 

@@ -37,7 +37,7 @@ public class DashboardHealthAgentController {
     private TokenService tokenService;
 
 
-    @RequestMapping(value="dashboard", method = RequestMethod.GET)
+    @RequestMapping(value="/dashboard", method = RequestMethod.GET)
     public ResponseEntity<DashboardResults> findAllPoiByFilters(@RequestBody PointOfInterest point,
                                                                 Pageable pageable, HttpServletRequest request) {
 
