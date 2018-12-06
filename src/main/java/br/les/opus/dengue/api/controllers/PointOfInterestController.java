@@ -90,7 +90,7 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		return poiRepository;
 	}
 	
-	@JsonView(View.PoiSummary.class)
+	//@JsonView(View.PoiSummary.class)
 	@RequestMapping(value = "nearby", method = RequestMethod.GET)
 	public ResponseEntity<PagedResources<Resource<DistanceResult>>> findAllNearby(
 			@Valid LatLng origin,
@@ -110,7 +110,7 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 	
 	
 	@Override
-	@JsonView(View.PoiSummary.class)
+	//@JsonView(View.PoiSummary.class)
 	@RequestMapping(method = RequestMethod.GET)
 	public ResponseEntity<PagedResources<Resource<PointOfInterest>>> findAll(
 			Pageable pageable, 
@@ -262,7 +262,7 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 	}
 
 	
-	@JsonView(View.Summary.class)
+	//@JsonView(View.Summary.class)
 	@RequestMapping(value = "{poiId}/comment", method = RequestMethod.GET) 
 	public ResponseEntity< PagedResources<Resource<PoiComment>> > findAllComments(Pageable pageable, 
 			PagedResourcesAssembler<PoiComment> assembler, @PathVariable Long poiId, HttpServletRequest request) {
