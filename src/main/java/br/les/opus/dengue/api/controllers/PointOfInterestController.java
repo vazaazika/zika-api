@@ -183,7 +183,6 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		statusUpdateType.setId(PoiStatusUpdateType.REPORTED);
 		poiStatusUpdate.setType(statusUpdateType);
 
-		poiStatusUpdate.setPoi(newObject);
 		poiStatusUpdate.setDate(new Date());
 		poiStatusUpdate.setUser(newObject.getUser());
 
@@ -342,7 +341,6 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 				statusUpdateType.setId(PoiStatusUpdateType.IN_ANALYSIS);
 				poiStatusUpdate.setType(statusUpdateType);
 
-				poiStatusUpdate.setPoi(targetPoi);
 				poiStatusUpdate.setDate(new Date());
 				poiStatusUpdate.setUser(targetPoi.getUser());
 
@@ -399,7 +397,6 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 				statusUpdateType.setId(PoiStatusUpdateType.TREATED);
 				poiStatusUpdate.setType(statusUpdateType);
 
-				poiStatusUpdate.setPoi(targetPoi);
 				poiStatusUpdate.setDate(new Date());
 				poiStatusUpdate.setUser(targetPoi.getUser());
 
