@@ -54,12 +54,16 @@ import br.les.opus.dengue.core.repositories.PoiCommentVoteRepository;
 import br.les.opus.dengue.core.repositories.PoiVoteRepository;
 import br.les.opus.dengue.core.repositories.PointOfInterestRepository;
 import br.les.opus.dengue.core.services.VoteService;
+import br.les.opus.gamification.domain.IBGEInfo;
+import br.les.opus.gamification.repositories.IBGERepository;
 import br.les.opus.gamification.services.PerformedTaskService;
 
 @Controller
 @Transactional
 @RequestMapping("/poi")
 public class PointOfInterestController extends AbstractCRUDController<PointOfInterest>{
+	@Autowired
+	private IBGERepository ibgeDao;
 	
 	@Autowired
 	private PointOfInterestRepository poiRepository;
@@ -180,6 +184,11 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 				value.setPoi(newObject);
 			}
 		}
+		
+		//Get the city and state
+		IBGEInfo info = ibgeDao.findByPoint(newObject.getLocation()); 
+		newObject.setCity(info.getNome());
+		newObject.setState(info.getUf());
 		
 		List<Picture> documents = newObject.getPictures();
 		newObject.setPictures(new ArrayList<Picture>());

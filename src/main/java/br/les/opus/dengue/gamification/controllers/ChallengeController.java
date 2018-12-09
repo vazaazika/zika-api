@@ -382,7 +382,7 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 			return new ResponseEntity<>(HttpStatus.FORBIDDEN);
 		}
 		
-		TeamUpChallenge challenge = tucDao.findOneByPlayers(challengerTeam, rivalTeam);
+		TeamUpChallenge challenge = tucDao.findInCompletedByPlayers(challengerTeam, rivalTeam);
 		
 		if(challenge != null) {
 			return new ResponseEntity<>(challenge, HttpStatus.FORBIDDEN);
