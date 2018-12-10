@@ -34,37 +34,13 @@ import br.les.opus.dengue.core.repositories.PoiStatusUpdateRepository;
 @Transactional
 @RequestMapping("/poi-status-update")
 public class PoiStatusUpdateController extends AbstractCRUDController<PoiStatusUpdate> {
-	
+
 	@Autowired
-	private PoiStatusUpdateRepository repository; 
-	
+	private PoiStatusUpdateRepository repository;
+
 	@Autowired
 	private TokenService tokenService;
-	
-	@JsonView(View.PoiDetails.class)
-	@RequestMapping(method = RequestMethod.POST) 
-	public ResponseEntity<PoiStatusUpdate> insert(@RequestBody @Valid PoiStatusUpdate newObject, 
-			BindingResult result, HttpServletResponse response, HttpServletRequest request) {
-		
-		if (tokenService.hasAuthenticatedUser(request)) {
-			Token token = tokenService.getAuthenticatedUser(request);
-			newObject.setUser(token.getUser());
-		}
-		
-		if (newObject.getUserLocation() != null) {
-			newObject.getUserLocation().setSRID(LatLng.GOOGLE_SRID);
-		}
-		
-		User user = newObject.getUser();
-		PointOfInterest poi = newObject.getPoi();
-		PoiStatusUpdateType type = newObject.getType();
-		List<PoiStatusUpdate> updates = repository.findByUserAndPoi(user, poi, type);
-		if (!updates.isEmpty()) {
-			return new ResponseEntity<PoiStatusUpdate>(HttpStatus.BAD_REQUEST);
-		}
-		
-		return super.insert(newObject, result, response, request);
-	}
+
 	
 	@Override
 	protected PagingSortingFilteringRepository<PoiStatusUpdate, Long> getRepository() {
