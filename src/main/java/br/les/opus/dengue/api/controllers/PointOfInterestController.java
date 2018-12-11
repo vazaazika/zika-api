@@ -8,6 +8,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
+import org.hibernate.exception.SQLGrammarException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
@@ -186,9 +187,14 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		}
 		
 		//Get the city and state
-		IBGEInfo info = ibgeDao.findByPoint(newObject.getLocation()); 
-		newObject.setCity(info.getNome());
-		newObject.setState(info.getUf());
+		try {
+			IBGEInfo info = ibgeDao.findByPoint(newObject.getLocation()); 
+			newObject.setCity(info.getNome());
+			newObject.setState(info.getUf());
+		}catch (SQLGrammarException e) {
+			newObject.setCity("");
+			newObject.setState("");
+		}
 		
 		List<Picture> documents = newObject.getPictures();
 		newObject.setPictures(new ArrayList<Picture>());
