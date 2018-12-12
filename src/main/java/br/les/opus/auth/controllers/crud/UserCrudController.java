@@ -276,8 +276,6 @@ public class UserCrudController extends AbstractCRUDController<User>{
 
 		Token token = tokenService.getAuthenticatedUser(request);
 
-
-
 		if (token == null || token.getUser() == null)  {
 			return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
 		}
@@ -285,17 +283,13 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		User user = token.getUser();
 
 		if (deviceService.existDevice(user,tokenDevice) != null){
-
 			return new ResponseEntity<User>(HttpStatus.BAD_REQUEST);
-
 		}else{
-
-		Device device = deviceService.insertDevice(user,tokenDevice);
-		user.getDevices().add(device);
-		repository.save(user);
+			Device device = deviceService.insertDevice(user,tokenDevice);
+			user.getDevices().add(device);
+			repository.save(user);
 		}
 		return new ResponseEntity<User>(HttpStatus.OK);
-
 	}
 
 	@Override

@@ -14,6 +14,7 @@ import br.les.opus.dengue.core.domain.PointOfInterest;
 import br.les.opus.dengue.core.repositories.PointOfInterestRepository;
 import br.les.opus.gamification.domain.feedback.Feedback;
 import br.les.opus.gamification.domain.feedback.FeedbackPoiInformationQuality;
+import br.les.opus.gamification.domain.feedback.FeedbackType;
 import br.les.opus.gamification.services.FeedbackService;
 import br.les.opus.gamification.services.NotificationService;
 
@@ -32,7 +33,7 @@ import java.util.*;
 @RestController
 @Transactional
 @RequestMapping("/feedback-poi")
-public class FeedbackController extends AbstractCRUDController<Feedback> {
+public class FeedbackController extends AbstractCRUDController<FeedbackPoiInformationQuality> {
 
     protected Logger logger = Logger.getLogger(getEntityClass());
 
@@ -49,8 +50,20 @@ public class FeedbackController extends AbstractCRUDController<Feedback> {
     private TokenService tokenService;
 
     @RequestMapping(value = "{poiId}/quality-information", method = RequestMethod.POST)
-    public ResponseEntity<Feedback> createFeedbackQualityInformation(@PathVariable Long poiId, String body,
-                                                                     BindingResult result, HttpServletResponse response, HttpServletRequest request) {
+    public ResponseEntity<FeedbackPoiInformationQuality> createFeedbackQualityInformation(@PathVariable Long poiId, @RequestBody FeedbackPoiInformationQuality poiInformationQuality,
+                                                                                          BindingResult result, HttpServletResponse response, HttpServletRequest request) {
+
+        System.out.println("Meu querindooo: "+poiId);
+
+        System.out.println("Meu querindooo 2: "+poiInformationQuality.getBody());
+
+        System.out.println("Meu querindooo 3: "+poiInformationQuality.getTitle());
+
+
+        System.out.println("Meu querindooo 4: "+poiInformationQuality.getFeedbackType());
+
+        System.out.println("Meu querindooo 4: "+poiInformationQuality.getFeedbackType().get(0).getId());
+
 
         if (!poiRepository.exists(poiId)) {
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
@@ -65,44 +78,68 @@ public class FeedbackController extends AbstractCRUDController<Feedback> {
             throw new ValidationException(result);
         }
 
-        if (user.isHealthAgent()) {
-            FeedbackPoiInformationQuality informationQuality = new FeedbackPoiInformationQuality();
-            informationQuality.setDate(new Date());
-            informationQuality.setTitle("");
-            informationQuality.setBody(body);
-            informationQuality.setObject(poi);
+        if (poiInformationQuality == null){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
 
-            logger.info("Inserindo novo feedback " + informationQuality);
-            FeedbackPoiInformationQuality received = feedbackService.saveFeedbackInformationQuality(informationQuality);
+        poiInformationQuality.setDate(new Date());
+
+        if (user.isHealthAgent()) {
+
+            poiInformationQuality.setObject(poi);
+            poiInformationQuality.setUser(user);
+            logger.info("Inserindo novo feedback " + poiInformationQuality);
+            FeedbackPoiInformationQuality received = feedbackService.saveFeedbackInformationQuality(poiInformationQuality);
 
             //messages
             if(poi.getUser().getDevices()!=null) {
                 Map<String, String> mapa = new HashMap<>();
                 mapa.put("type", Constant.POI_QUALITY_INFORMATION);
-                mapa.put("message", "New information Quality: "+informationQuality.getBody());
+                mapa.put("message", "New information Quality: " + poiInformationQuality.getBody());
                 mapa.put("id", "" + received.getId());
+                //mapa.put("type_feedback", "" + received.getFeedbackType());
+
 
                 for(Device dev: user.getDevices())
                     notificationService.sendNotificationId(mapa, dev.getToken());
             }
 
-            return new ResponseEntity<>(HttpStatus.CREATED);
+            return new ResponseEntity<>(received, HttpStatus.CREATED);
 
         } else {
-            return new ResponseEntity<Feedback>(HttpStatus.UNAUTHORIZED);
+            System.out.println("MEU FI");
+            return new ResponseEntity<FeedbackPoiInformationQuality>(HttpStatus.UNAUTHORIZED);
 
 
         }
     }
 
 
+    @RequestMapping(value = "/quality-information-type", method = RequestMethod.POST)
+    public ResponseEntity<FeedbackType> createFeedbackType(@RequestBody FeedbackType feedbackType, BindingResult result, HttpServletResponse response, HttpServletRequest request) {
 
+        Token token = tokenService.getAuthenticatedUser(request);
+        User user = token.getUser();
 
+        if (result.hasErrors()) {
+            throw new ValidationException(result);
+        }
 
+        if (user.isHealthAgent()) {
 
+            logger.info("Inserindo novo feedback Tyoe" + feedbackType);
+            FeedbackType feedbackType2 = feedbackService.saveFeedbackType(feedbackType);
+
+            return new ResponseEntity<>(feedbackType2, HttpStatus.CREATED);
+
+        } else {
+            System.out.println("MEU FI");
+            return new ResponseEntity<FeedbackType>(HttpStatus.UNAUTHORIZED);
+        }
+    }
 
     @Override
-    protected PagingSortingFilteringRepository<Feedback, Long> getRepository() {
+    protected PagingSortingFilteringRepository<FeedbackPoiInformationQuality, Long> getRepository() {
         return null;
     }
 }
