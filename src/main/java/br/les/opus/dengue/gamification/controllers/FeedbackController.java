@@ -92,7 +92,7 @@ public class FeedbackController extends AbstractCRUDController<FeedbackPoiInform
             FeedbackPoiInformationQuality received = feedbackService.saveFeedbackInformationQuality(poiInformationQuality);
 
             //messages
-            if(poi.getUser().getDevices()!=null) {
+            if( poi.getUser() != null && poi.getUser().getDevices()!=null) {
                 Map<String, String> mapa = new HashMap<>();
                 mapa.put("type", Constant.POI_QUALITY_INFORMATION);
                 mapa.put("message", "New information Quality: " + poiInformationQuality.getBody());
