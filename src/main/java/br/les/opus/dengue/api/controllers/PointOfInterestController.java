@@ -1,14 +1,21 @@
 package br.les.opus.dengue.api.controllers;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import org.hibernate.exception.SQLGrammarException;
+
+import br.les.opus.auth.core.domain.Device;
+import br.les.opus.auth.core.repositories.UserRepository;
+import br.les.opus.auth.core.services.UserService;
+import br.les.opus.dengue.core.domain.*;
+import br.les.opus.dengue.core.repositories.*;
+import br.les.opus.gamification.domain.feedback.FeedbackPoiInformationQuality;
+import br.les.opus.gamification.repositories.FeedbackPoiInformationQualityRepository;
+import br.les.opus.gamification.services.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
@@ -41,19 +48,8 @@ import br.les.opus.commons.rest.controllers.AbstractCRUDController;
 import br.les.opus.commons.rest.exceptions.ValidationException;
 import br.les.opus.commons.rest.geo.LatLng;
 import br.les.opus.dengue.api.builders.FeatureCollectionBuilder;
-import br.les.opus.dengue.core.domain.Picture;
-import br.les.opus.dengue.core.domain.PoiComment;
-import br.les.opus.dengue.core.domain.PoiCommentVote;
-import br.les.opus.dengue.core.domain.PoiVote;
-import br.les.opus.dengue.core.domain.PointOfInterest;
-import br.les.opus.dengue.core.domain.Vote;
 import br.les.opus.dengue.core.fields.FieldValue;
 import br.les.opus.dengue.core.json.View;
-import br.les.opus.dengue.core.repositories.PictureRepository;
-import br.les.opus.dengue.core.repositories.PoiCommentRepository;
-import br.les.opus.dengue.core.repositories.PoiCommentVoteRepository;
-import br.les.opus.dengue.core.repositories.PoiVoteRepository;
-import br.les.opus.dengue.core.repositories.PointOfInterestRepository;
 import br.les.opus.dengue.core.services.VoteService;
 import br.les.opus.gamification.domain.IBGEInfo;
 import br.les.opus.gamification.repositories.IBGERepository;
@@ -62,7 +58,7 @@ import br.les.opus.gamification.services.PerformedTaskService;
 @Controller
 @Transactional
 @RequestMapping("/poi")
-public class PointOfInterestController extends AbstractCRUDController<PointOfInterest>{
+public class PointOfInterestController extends AbstractCRUDController<PointOfInterest>
 	@Autowired
 	private IBGERepository ibgeDao;
 	
@@ -89,6 +85,16 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 	
 	@Autowired
 	private PoiVoteRepository poiVoteRepository;
+  
+   @Autowired
+  private NotificationService notificationService;
+
+
+  @Autowired
+  private FeedbackPoiInformationQualityRepository feedbackPoiInformationQualityRepository;
+
+  @Autowired
+  private UserRepository userRepository;
 
 	@Override
 	protected PagingSortingFilteringRepository<PointOfInterest, Long> getRepository() {
@@ -214,33 +220,53 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		return responseEntity;
 	}
 	
-	@RequestMapping(value="/{id}", method=RequestMethod.PUT) 
-	public ResponseEntity<PointOfInterest> updateOne(@RequestBody PointOfInterest poi, 
-			@PathVariable Long id, BindingResult result, HttpServletRequest request) {
-		
-		PointOfInterest targetPoi = poiRepository.findOne(id);
-		if (targetPoi == null) {
-			return new ResponseEntity<PointOfInterest>(HttpStatus.NOT_FOUND);
-		}
-		
-		Token token = tokenService.getAuthenticatedUser(request);
-		User user = token.getUser();
-		/**
-		 * The user only will be able to change a point of interest if he is root or owner
-		 * of the point of interest
-		 */
-		if (user.isRoot() || user.equals(targetPoi.getUser()) ) {
-			poi.getLocation().setSRID(LatLng.GOOGLE_SRID);
-			poi.setDate(new Date());
-			poi.setPublished(true);
-			if (user.equals(targetPoi.getUser())) {
-				poi.setUser(user);
-			}
-			return super.updateOne(poi, id, result, request);
-		} else {
-			return new ResponseEntity<PointOfInterest>(HttpStatus.UNAUTHORIZED);
-		}
-	}
+@RequestMapping(value="/{id}", method=RequestMethod.PUT)
+    public ResponseEntity<PointOfInterest> updateOne(@RequestBody PointOfInterest poi,
+                                                     @PathVariable Long id, BindingResult result, HttpServletRequest request) {
+
+        PointOfInterest targetPoi = poiRepository.findOne(id);
+        if (targetPoi == null) {
+            return new ResponseEntity<PointOfInterest>(HttpStatus.NOT_FOUND);
+        }
+
+        Token token = tokenService.getAuthenticatedUser(request);
+        User user = token.getUser();
+
+        /**
+         * The user only will be able to change a point of interest if he is root or owner
+         * of the point of interest
+         */
+        if (user.isRoot() || user.equals(targetPoi.getUser()) ) {
+            poi.getLocation().setSRID(LatLng.GOOGLE_SRID);
+            poi.setDate(new Date());
+            poi.setPublished(true);
+            if (user.equals(targetPoi.getUser())) {
+                poi.setUser(user);
+                FeedbackPoiInformationQuality fq = feedbackPoiInformationQualityRepository.findByPoiAndStatus(targetPoi.getId(), false);
+                if (fq != null) {
+                    fq.setResolved(true);
+                    feedbackPoiInformationQualityRepository.save(fq);
+                    //messages
+                    if (fq.getUser() != null) {
+                        if (fq.getUser().getDevices() != null) {
+                            Map<String, String> mapa = new HashMap<>();
+                            mapa.put("type", Constant.POI_QUALITY_INFORMATION_UPDATE_BY_USER);
+                            mapa.put("message", "The user has been updated the POI: " + targetPoi.getDescription());
+                            mapa.put("id", "" + targetPoi.getId());
+                            //mapa.put("type_feedback", "" + received.getFeedbackType());
+
+                            for (Device dev : fq.getUser().getDevices())
+                                notificationService.sendNotificationId(mapa, dev.getToken());
+                        }
+                    }
+                }
+            }
+            return super.updateOne(poi, id, result, request);
+        } else {
+            return new ResponseEntity<PointOfInterest>(HttpStatus.UNAUTHORIZED);
+        }
+    }
+
 	
 	
 	@RequestMapping(value = "{id}/html", method = RequestMethod.GET)
@@ -325,4 +351,90 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		return new ResponseEntity<>(vote, HttpStatus.OK);
 	}
 	
+}
+
+    @RequestMapping(value="{id}/status-to-in-analysis", method= RequestMethod.PUT)
+    public ResponseEntity<PointOfInterest> updatePoiStatusTypeToInAnalysis(@PathVariable Long id, HttpServletRequest request) {
+
+        PointOfInterest targetPoi = poiRepository.findOne(id);
+
+        if (targetPoi == null) {
+            return new ResponseEntity<PointOfInterest>(HttpStatus.NOT_FOUND);
+        }
+
+        Token token = tokenService.getAuthenticatedUser(request);
+        User user = token.getUser();
+
+        /**
+         * The agent only will be able to change the status a point of interest
+         */
+        if (user.isHealthAgent() ) {
+            //Notifications
+            if(targetPoi.getUser()!=null && targetPoi.getUser().getDevices()!=null) {
+                Map<String, String> mapa = new HashMap<>();
+                mapa.put("type", Constant.POI_STATUS_UPDATE);
+                mapa.put("message", "POI "+targetPoi.getDescription()+"Status is updating...");
+                mapa.put("id", "" + targetPoi.getId());
+
+                for(Device dev: targetPoi.getUser().getDevices())
+                    notificationService.sendNotificationId(mapa, dev.getToken());
+            }
+
+            logger.info("hange the poi status from reported to in analysis " + targetPoi);
+            PoiStatusUpdateType ps = new PoiStatusUpdateType();
+            ps.setId(PoiStatusUpdateType.IN_ANALYSIS);
+            targetPoi.setPoiStatusUpdateType(ps);
+            targetPoi.setUserModifiedStatus(user);
+            poiRepository.save(targetPoi);
+
+            PointOfInterest targetPoi2 = poiRepository.findOne(id);
+            return new ResponseEntity<>(targetPoi2, HttpStatus.OK);
+
+        } else {
+            return new ResponseEntity<PointOfInterest>(HttpStatus.UNAUTHORIZED);
+        }
+    }
+
+
+    @RequestMapping(value="{id}/status-to-treated", method=RequestMethod.PUT)
+    public ResponseEntity<PointOfInterest> updatePoiStatusTypeToTreated(@PathVariable Long id, HttpServletRequest request) {
+        PointOfInterest targetPoi = poiRepository.findOne(id);
+
+        if (targetPoi == null) {
+            return new ResponseEntity<PointOfInterest>(HttpStatus.NOT_FOUND);
+        }
+
+        Token token = tokenService.getAuthenticatedUser(request);
+        User user = token.getUser();
+        /**
+         * The agent only will be able to change the status a point of interest
+         */
+        if (user.isHealthAgent() ) {
+
+            //Notifications
+            if(targetPoi.getUser()!=null && targetPoi.getUser().getDevices()!=null) {
+                Map<String, String> mapa = new HashMap<>();
+                mapa.put("type", Constant.POI_STATUS_UPDATE);
+                mapa.put("message", "POI "+targetPoi.getDescription()+"Status is updating...");
+                mapa.put("id", "" + targetPoi.getId());
+
+                for(Device dev: targetPoi.getUser().getDevices())
+                    notificationService.sendNotificationId(mapa, dev.getToken());
+            }
+
+            logger.info("hange the poi status from reported to in analysis " + targetPoi);
+            PoiStatusUpdateType ps = new PoiStatusUpdateType();
+            ps.setId(PoiStatusUpdateType.TREATED);
+            targetPoi.setPoiStatusUpdateType(ps);
+            targetPoi.setUserModifiedStatus(user);
+            poiRepository.save(targetPoi);
+
+            PointOfInterest targetPoi2 = poiRepository.findOne(id);
+            return new ResponseEntity<>(targetPoi2, HttpStatus.OK);
+        } else {
+            return new ResponseEntity<PointOfInterest>(HttpStatus.UNAUTHORIZED);
+        }
+
+    }
+
 }
