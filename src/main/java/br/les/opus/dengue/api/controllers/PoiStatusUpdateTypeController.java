@@ -42,11 +42,4 @@ public class PoiStatusUpdateTypeController extends AbstractCRUDController<PoiSta
 		return repository;
 	}
 
-
-
-
-
-
-
-
 }
