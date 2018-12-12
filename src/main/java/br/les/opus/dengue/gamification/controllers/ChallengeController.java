@@ -460,4 +460,34 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 		return new ResponseEntity<PagedResources<Resource<TeamUpChallenge>>>(resources, HttpStatus.OK);
 	}
 	
+	
+	
+	
+	@RequestMapping(value = "/teamup/status", method = RequestMethod.GET)
+	public ResponseEntity<PagedResources<Resource<TeamUpChallenge>>> verifyOnlyTeamUpChallengeStatus(Pageable pageable,
+			PagedResourcesAssembler<TeamUpChallenge> assembler, HttpServletRequest request){
+		Player loggedPlayer = gameService.loadPlayer(request);
+		
+				
+		//verify players
+		if (!loggedPlayer.equals(loggedPlayer) && !loggedPlayer.isRoot()) {
+			return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+		}
+		
+		//get the player team
+		Membership membership = membershipService.findCurrentMembership(loggedPlayer);
+		
+		if(membership == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		Team challengerTeam = membership.getTeam();
+		
+				
+		Page<TeamUpChallenge> page = tucDao.findOpenByTeam(challengerTeam, pageable);
+		PagedResources<Resource<TeamUpChallenge>> resources = this.toPagedResources(page, assembler);
+		
+		return new ResponseEntity<PagedResources<Resource<TeamUpChallenge>>>(resources, HttpStatus.OK);
+	}
+	
 }
