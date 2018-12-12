@@ -23,7 +23,9 @@ import br.les.opus.gamification.domain.Membership;
 import br.les.opus.gamification.domain.Player;
 import br.les.opus.gamification.domain.PlayerInfo;
 import br.les.opus.gamification.repositories.BadgeRepository;
+import br.les.opus.gamification.repositories.IBGERepository;
 import br.les.opus.gamification.repositories.PlayerRepository;
+import br.les.opus.gamification.services.BadgeService;
 import br.les.opus.gamification.services.GamificationService;
 import br.les.opus.gamification.services.MembershipService;
 
@@ -31,6 +33,8 @@ import br.les.opus.gamification.services.MembershipService;
 @Transactional
 @RequestMapping("/game/player")
 public class PlayerController extends ReadOnlyController<Player>{
+	@Autowired
+	private IBGERepository ibgeDao;
 	
 	@Autowired
 	private BadgeRepository badgeDao;
@@ -43,6 +47,9 @@ public class PlayerController extends ReadOnlyController<Player>{
 	
 	@Autowired
 	private MembershipService membershipService;
+	
+	@Autowired
+	private BadgeService badgeService;
 
 	@RequestMapping(value="self/badges", method = RequestMethod.GET) 
 	public ResponseEntity< List<Badge> > findAllBadgesAndProgressionsSelf(HttpServletRequest request) {
@@ -52,6 +59,7 @@ public class PlayerController extends ReadOnlyController<Player>{
 		return new ResponseEntity<>(badges, HttpStatus.OK);
 	}
 	
+	
 	/*@RequestMapping(value="all", method = RequestMethod.GET) 
 	public ResponseEntity<PagedResources<Resource<TeamUpChallenge>>> findAllPlayers(HttpServletRequest request) {
 		Player player = gameService.loadPlayer(request);
@@ -59,8 +67,7 @@ public class PlayerController extends ReadOnlyController<Player>{
 		List<Badge> badges = badgeDao.findAllWithProgressions(player);
 		return new ResponseEntity<>(badges, HttpStatus.OK);
 	}*/
-	
-	
+
 	
 	@RequestMapping(value="{playerId}/badges", method = RequestMethod.GET) 
 	public ResponseEntity< List<Badge> > findAllBadgesAndProgressionsPlayer(
@@ -71,6 +78,20 @@ public class PlayerController extends ReadOnlyController<Player>{
 		}
 		
 		List<Badge> badges = badgeDao.findAllWithProgressions(player);
+		return new ResponseEntity<>(badges, HttpStatus.OK);
+	}
+	
+	@RequestMapping(value="{playerId}/badges/icons", method = RequestMethod.GET) 
+	public ResponseEntity< List<Badge> > findAllBadgesWithIconsAndProgressionsPlayer(
+			@PathVariable Long playerId, HttpServletRequest request) {
+		Player player = playerDao.findOne(playerId);
+		if (player == null) {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+		
+		List<Badge> badges = badgeDao.findAllWithProgressions(player);
+		badgeService.encodeIcons(badges);
+		
 		return new ResponseEntity<>(badges, HttpStatus.OK);
 	}
 	
@@ -102,6 +123,7 @@ public class PlayerController extends ReadOnlyController<Player>{
 	public ResponseEntity<PlayerInfo> findPlayerSelf(HttpServletRequest request) {
 		Player player = gameService.loadPlayer(request);
 		Membership membership = membershipService.findCurrentMembership(player);
+
 		
 		/*
 		 * We use the PlayerInfo here to avoid Infinite Recursion
