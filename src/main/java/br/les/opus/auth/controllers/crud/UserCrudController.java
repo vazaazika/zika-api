@@ -10,6 +10,7 @@ import javax.validation.Valid;
 
 import br.les.opus.auth.core.domain.*;
 import br.les.opus.auth.core.services.DeviceService;
+import br.les.opus.dengue.core.domain.PointOfInterest;
 import br.les.opus.gamification.domain.HealthAgent;
 import br.les.opus.gamification.services.HealthAgentService;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -169,6 +170,39 @@ public class UserCrudController extends AbstractCRUDController<User>{
 
 		return new ResponseEntity<HealthAgent>(newObject, HttpStatus.CREATED);
 	}
+
+
+
+	@RequestMapping(value="/{id}/update-health-agent", method=RequestMethod.PUT)
+	public ResponseEntity<HealthAgent> UpdateHealthAgent(@RequestBody HealthAgent updatingObject,
+											   @PathVariable Long id, BindingResult result, HttpServletRequest request) {
+		if (result.hasErrors()) {
+			throw new ValidationException(result);
+		}
+
+
+		Token token = tokenService.getAuthenticatedUser(request);
+
+		User user = token.getUser();
+
+		if (user.isHealthAgent()) {
+
+			HealthAgent healthAgent = healthAgentService.findById(id);
+
+			healthAgent.setOrganization(updatingObject.getOrganization());
+			healthAgent.setOrganization(updatingObject.getCity());
+			healthAgent.setOrganization(updatingObject.getState());
+			healthAgent.setOrganization(updatingObject.getUsername());
+			healthAgent.setOrganization(updatingObject.getName());
+
+			HealthAgent newHealthAgent = healthAgentService.save(healthAgent);
+
+			return new ResponseEntity<HealthAgent>(newHealthAgent, HttpStatus.OK);
+		} else {
+			return new ResponseEntity<HealthAgent>(HttpStatus.UNAUTHORIZED);
+		}
+	}
+
 
 
 
