@@ -1,21 +1,16 @@
 package br.les.opus.dengue.api.controllers;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import org.hibernate.exception.SQLGrammarException;
-
-import br.les.opus.auth.core.domain.Device;
-import br.les.opus.auth.core.repositories.UserRepository;
-import br.les.opus.auth.core.services.UserService;
-import br.les.opus.dengue.core.domain.*;
-import br.les.opus.dengue.core.repositories.*;
-import br.les.opus.gamification.domain.feedback.FeedbackPoiInformationQuality;
-import br.les.opus.gamification.repositories.FeedbackPoiInformationQualityRepository;
-import br.les.opus.gamification.services.NotificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
@@ -37,8 +32,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.fasterxml.jackson.annotation.JsonView;
 
+import br.les.opus.auth.core.domain.Device;
 import br.les.opus.auth.core.domain.Token;
 import br.les.opus.auth.core.domain.User;
+import br.les.opus.auth.core.repositories.UserRepository;
 import br.les.opus.auth.core.services.TokenService;
 import br.les.opus.commons.geojson.FeatureCollection;
 import br.les.opus.commons.persistence.PagingSortingFilteringRepository;
@@ -48,17 +45,32 @@ import br.les.opus.commons.rest.controllers.AbstractCRUDController;
 import br.les.opus.commons.rest.exceptions.ValidationException;
 import br.les.opus.commons.rest.geo.LatLng;
 import br.les.opus.dengue.api.builders.FeatureCollectionBuilder;
+import br.les.opus.dengue.core.domain.Picture;
+import br.les.opus.dengue.core.domain.PoiComment;
+import br.les.opus.dengue.core.domain.PoiCommentVote;
+import br.les.opus.dengue.core.domain.PoiStatusUpdateType;
+import br.les.opus.dengue.core.domain.PoiVote;
+import br.les.opus.dengue.core.domain.PointOfInterest;
+import br.les.opus.dengue.core.domain.Vote;
 import br.les.opus.dengue.core.fields.FieldValue;
 import br.les.opus.dengue.core.json.View;
+import br.les.opus.dengue.core.repositories.PictureRepository;
+import br.les.opus.dengue.core.repositories.PoiCommentRepository;
+import br.les.opus.dengue.core.repositories.PoiCommentVoteRepository;
+import br.les.opus.dengue.core.repositories.PoiVoteRepository;
+import br.les.opus.dengue.core.repositories.PointOfInterestRepository;
 import br.les.opus.dengue.core.services.VoteService;
 import br.les.opus.gamification.domain.IBGEInfo;
+import br.les.opus.gamification.domain.feedback.FeedbackPoiInformationQuality;
+import br.les.opus.gamification.repositories.FeedbackPoiInformationQualityRepository;
 import br.les.opus.gamification.repositories.IBGERepository;
+import br.les.opus.gamification.services.NotificationService;
 import br.les.opus.gamification.services.PerformedTaskService;
 
 @Controller
 @Transactional
 @RequestMapping("/poi")
-public class PointOfInterestController extends AbstractCRUDController<PointOfInterest>
+public class PointOfInterestController extends AbstractCRUDController<PointOfInterest>{
 	@Autowired
 	private IBGERepository ibgeDao;
 	
@@ -350,8 +362,6 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		voteService.vote(poi, vote);
 		return new ResponseEntity<>(vote, HttpStatus.OK);
 	}
-	
-}
 
     @RequestMapping(value="{id}/status-to-in-analysis", method= RequestMethod.PUT)
     public ResponseEntity<PointOfInterest> updatePoiStatusTypeToInAnalysis(@PathVariable Long id, HttpServletRequest request) {
