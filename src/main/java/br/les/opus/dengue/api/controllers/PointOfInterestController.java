@@ -58,7 +58,7 @@ import br.les.opus.gamification.services.PerformedTaskService;
 @Controller
 @Transactional
 @RequestMapping("/poi")
-public class PointOfInterestController extends AbstractCRUDController<PointOfInterest>
+public class PointOfInterestController extends AbstractCRUDController<PointOfInterest>{
 	@Autowired
 	private IBGERepository ibgeDao;
 	
@@ -351,7 +351,6 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		return new ResponseEntity<>(vote, HttpStatus.OK);
 	}
 	
-}
 
     @RequestMapping(value="{id}/status-to-in-analysis", method= RequestMethod.PUT)
     public ResponseEntity<PointOfInterest> updatePoiStatusTypeToInAnalysis(@PathVariable Long id, HttpServletRequest request) {
