@@ -94,6 +94,7 @@ public class PlayerController extends ReadOnlyController<Player>{
 		return new ResponseEntity<>(badges, HttpStatus.OK);
 	}
 	
+	
 	@RequestMapping(value="{playerId}", method = RequestMethod.GET) 
 	public ResponseEntity<PlayerInfo> findPlayer(@PathVariable Long playerId) {
 		Player player = playerDao.findOne(playerId);
