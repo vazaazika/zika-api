@@ -193,19 +193,19 @@ public class UserCrudController extends AbstractCRUDController<User>{
 			}
 
 			if(updatingObject.getCity()!=null){
-				healthAgent.setOrganization(updatingObject.getCity());
+				healthAgent.setCity(updatingObject.getCity());
 			}
 
 			if(updatingObject.getState()!=null) {
-				healthAgent.setOrganization(updatingObject.getState());
+				healthAgent.setState(updatingObject.getState());
 			}
 
 			if(updatingObject.getUsername()!=null) {
-				healthAgent.setOrganization(updatingObject.getUsername());
+				healthAgent.setUsername(updatingObject.getUsername());
 			}
 
 			if(updatingObject.getName()!=null) {
-				healthAgent.setOrganization(updatingObject.getName());
+				healthAgent.setName(updatingObject.getName());
 			}
 
 			HealthAgent newHealthAgent = healthAgentService.save(healthAgent);
