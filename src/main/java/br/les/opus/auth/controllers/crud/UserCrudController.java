@@ -172,9 +172,10 @@ public class UserCrudController extends AbstractCRUDController<User>{
 	}
 
 
+
 	@RequestMapping(value="/{id}/update-health-agent", method=RequestMethod.PUT)
 	public ResponseEntity<HealthAgent> UpdateHealthAgent(@RequestBody HealthAgent updatingObject,
-														 @PathVariable Long id, BindingResult result, HttpServletRequest request) {
+											   @PathVariable Long id, BindingResult result, HttpServletRequest request) {
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
 		}
@@ -188,25 +189,11 @@ public class UserCrudController extends AbstractCRUDController<User>{
 
 			HealthAgent healthAgent = healthAgentService.findById(id);
 
-			if(updatingObject.getOrganization()!=null) {
-				healthAgent.setOrganization(updatingObject.getOrganization());
-			}
-
-			if(updatingObject.getCity()!=null){
-				healthAgent.setOrganization(updatingObject.getCity());
-			}
-
-			if(updatingObject.getState()!=null) {
-				healthAgent.setOrganization(updatingObject.getState());
-			}
-
-			if(updatingObject.getUsername()!=null) {
-				healthAgent.setOrganization(updatingObject.getUsername());
-			}
-
-			if(updatingObject.getName()!=null) {
-				healthAgent.setOrganization(updatingObject.getName());
-			}
+			healthAgent.setOrganization(updatingObject.getOrganization());
+			healthAgent.setOrganization(updatingObject.getCity());
+			healthAgent.setOrganization(updatingObject.getState());
+			healthAgent.setOrganization(updatingObject.getUsername());
+			healthAgent.setOrganization(updatingObject.getName());
 
 			HealthAgent newHealthAgent = healthAgentService.save(healthAgent);
 
@@ -215,8 +202,6 @@ public class UserCrudController extends AbstractCRUDController<User>{
 			return new ResponseEntity<HealthAgent>(HttpStatus.UNAUTHORIZED);
 		}
 	}
-
-
 
 
 
