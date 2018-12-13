@@ -319,6 +319,22 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		return new ResponseEntity<User>(user, HttpStatus.OK);
 	}
 
+	@RequestMapping(value="/{id}/name", method=RequestMethod.PUT)
+	public ResponseEntity<User> changeName(@RequestBody User updatingObject,
+											   @PathVariable Long id, BindingResult result, HttpServletRequest request) {
+		if (result.hasErrors()) {
+			throw new ValidationException(result);
+		}
+
+		repository.setName(id, updatingObject.getName());
+
+		User user = repository.findOne(id);
+
+
+
+		return new ResponseEntity<User>(user, HttpStatus.OK);
+	}
+
 
 	@RequestMapping(value = "/device", method=RequestMethod.PUT)
 	public ResponseEntity<User> insertDevice(HttpServletRequest request, @RequestParam(value="token-device", required=true) String tokenDevice) {

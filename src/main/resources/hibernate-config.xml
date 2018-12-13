@@ -18,7 +18,7 @@
 
 	<bean id="sessionFactory"
 		class="org.springframework.orm.hibernate4.LocalSessionFactoryBean">
-		<!--property name="dataSource" ref="dataSourcePostgresqlLeo" /-->
+		<!-- property name="dataSource" ref="dataSourcePostgresqlLeo" /-->
 		<property name="dataSource" ref="dataSourceDockerServer" />
 		<property name="packagesToScan">
 			<list>
@@ -102,7 +102,7 @@
 	<bean id="dataSourcePostgresqlLeo" class="com.mchange.v2.c3p0.ComboPooledDataSource"
 		destroy-method="close">
 		<property name="driverClass" value="org.postgresql.Driver" />
-		<property name="jdbcUrl" value="jdbc:postgresql://localhost/dengue" />
+		<property name="jdbcUrl" value="jdbc:postgresql://localhost/experimento" />
 		<property name="user" value="postgres" />
 		<property name="password" value="" />
 		<property name="minPoolSize" value="1" />
