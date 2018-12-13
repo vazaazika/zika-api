@@ -175,7 +175,7 @@ public class UserCrudController extends AbstractCRUDController<User>{
 
 	@RequestMapping(value="/{id}/update-health-agent", method=RequestMethod.PUT)
 	public ResponseEntity<HealthAgent> UpdateHealthAgent(@RequestBody HealthAgent updatingObject,
-											   @PathVariable Long id, BindingResult result, HttpServletRequest request) {
+														 @PathVariable Long id, BindingResult result, HttpServletRequest request) {
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
 		}
@@ -306,7 +306,7 @@ public class UserCrudController extends AbstractCRUDController<User>{
 
 	@RequestMapping(value="/{id}/name", method=RequestMethod.PUT)
 	public ResponseEntity<User> changeName(@RequestBody User updatingObject,
-											   @PathVariable Long id, BindingResult result, HttpServletRequest request) {
+										   @PathVariable Long id, BindingResult result, HttpServletRequest request) {
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
 		}
