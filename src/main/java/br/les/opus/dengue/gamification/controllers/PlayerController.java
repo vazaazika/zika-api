@@ -81,10 +81,9 @@ public class PlayerController extends ReadOnlyController<Player>{
 		return new ResponseEntity<>(badges, HttpStatus.OK);
 	}
 	
-	@RequestMapping(value="{playerId}/badges/icons", method = RequestMethod.GET) 
-	public ResponseEntity< List<Badge> > findAllBadgesWithIconsAndProgressionsPlayer(
-			@PathVariable Long playerId, HttpServletRequest request) {
-		Player player = playerDao.findOne(playerId);
+	@RequestMapping(value="self/badges/icons", method = RequestMethod.GET) 
+	public ResponseEntity< List<Badge> > findAllBadgesWithIconsAndProgressionsPlayer(HttpServletRequest request) {
+		Player player = gameService.loadPlayer(request);
 		if (player == null) {
 			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
 		}
@@ -94,6 +93,7 @@ public class PlayerController extends ReadOnlyController<Player>{
 		
 		return new ResponseEntity<>(badges, HttpStatus.OK);
 	}
+	
 	
 	@RequestMapping(value="{playerId}", method = RequestMethod.GET) 
 	public ResponseEntity<PlayerInfo> findPlayer(@PathVariable Long playerId) {
