@@ -10,7 +10,6 @@ import org.hibernate.exception.SQLGrammarException;
 
 import br.les.opus.auth.core.domain.Device;
 import br.les.opus.auth.core.repositories.UserRepository;
-import br.les.opus.auth.core.services.UserService;
 import br.les.opus.dengue.core.domain.*;
 import br.les.opus.dengue.core.repositories.*;
 import br.les.opus.gamification.domain.feedback.FeedbackPoiInformationQuality;
@@ -64,6 +63,9 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 	
 	@Autowired
 	private PointOfInterestRepository poiRepository;
+	
+	@Autowired
+	private FieldValueRepository fieldValueRepository;
 	
 	@Autowired
 	private PictureRepository documentRepository;
@@ -192,15 +194,7 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 			}
 		}
 		
-		//Get the city and state
-		try {
-			IBGEInfo info = ibgeDao.findByPoint(newObject.getLocation()); 
-			newObject.setCity(info.getNome());
-			newObject.setState(info.getUf());
-		}catch (SQLGrammarException e) {
-			newObject.setCity("");
-			newObject.setState("");
-		}
+		updateCityAndState(newObject);
 		
 		List<Picture> documents = newObject.getPictures();
 		newObject.setPictures(new ArrayList<Picture>());
@@ -218,6 +212,18 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
 		}
 		PerformedTaskService.affectedObjectStorage.set(poiCreated);
 		return responseEntity;
+	}
+
+	private void updateCityAndState(PointOfInterest newObject) {
+		//Get the city and state
+		try {
+			IBGEInfo info = ibgeDao.findByPoint(newObject.getLocation()); 
+			newObject.setCity(info.getNome());
+			newObject.setState(info.getUf());
+		}catch (SQLGrammarException e) {
+			newObject.setCity("");
+			newObject.setState("");
+		}
 	}
 	
 @RequestMapping(value="/{id}", method=RequestMethod.PUT)
@@ -240,6 +246,21 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
             poi.getLocation().setSRID(LatLng.GOOGLE_SRID);
             poi.setDate(new Date());
             poi.setPublished(true);
+            
+            updateCityAndState(poi);
+            
+            List<FieldValue> fields = targetPoi.getFieldValues();
+            targetPoi.setFieldValues(null);
+            
+            fieldValueRepository.delete(fields);
+            
+            if (poi.getFieldValues() != null) {
+    			for (FieldValue value : poi.getFieldValues()) {
+    				value.setPoi(poi);
+    			}
+    		}
+            
+            
             if (user.equals(targetPoi.getUser())) {
                 poi.setUser(user);
                 FeedbackPoiInformationQuality fq = feedbackPoiInformationQualityRepository.findByPoiAndStatus(targetPoi.getId(), false);
@@ -267,8 +288,7 @@ public class PointOfInterestController extends AbstractCRUDController<PointOfInt
         }
     }
 
-	
-	
+
 	@RequestMapping(value = "{id}/html", method = RequestMethod.GET)
 	public String getSocialMediaSharingView(@PathVariable Long id, Model model) {
 		PointOfInterest poi = poiRepository.findOne(id);
