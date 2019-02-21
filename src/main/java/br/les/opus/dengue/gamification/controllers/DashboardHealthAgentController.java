@@ -7,6 +7,7 @@ import br.les.opus.auth.core.domain.User;
 import br.les.opus.auth.core.services.TokenService;
 import br.les.opus.commons.rest.controllers.AbstractController;
 import br.les.opus.dengue.core.domain.PointOfInterest;
+import br.les.opus.dengue.core.domain.PointOfInterestFilter;
 import br.les.opus.dengue.core.repositories.PointOfInterestRepository;
 import br.les.opus.gamification.domain.DashboardResults;
 import br.les.opus.gamification.domain.HealthAgent;
@@ -47,7 +48,7 @@ public class DashboardHealthAgentController {
 
 
     @RequestMapping(value = "/filter", method = RequestMethod.GET)
-    public ResponseEntity<DashboardResults> findAllPoiByFilters(PointOfInterest point,
+    public ResponseEntity<DashboardResults> findAllPoiByFilters(PointOfInterestFilter point,
                                                                 Pageable pageable, HttpServletRequest request) {
         Token token = tokenService.getAuthenticatedUser(request);
 
