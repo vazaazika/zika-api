@@ -10,7 +10,6 @@ import javax.validation.Valid;
 
 import br.les.opus.auth.core.domain.*;
 import br.les.opus.auth.core.services.DeviceService;
-import br.les.opus.dengue.core.domain.PointOfInterest;
 import br.les.opus.gamification.domain.HealthAgent;
 import br.les.opus.gamification.services.HealthAgentService;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -138,6 +137,7 @@ public class UserCrudController extends AbstractCRUDController<User>{
 		if (newObject.getPassword() != null) {
 			newObject.setPassword(DigestUtils.md5Hex(newObject.getPassword()));
 		}
+
 		newObject = userService.save(newObject);
 		Link detail = linkTo(this.getClass()).slash(newObject.getId()).withSelfRel();
 		response.setHeader("Location", detail.getHref());
@@ -151,6 +151,11 @@ public class UserCrudController extends AbstractCRUDController<User>{
 	@RequestMapping(value="/health-agent", method = RequestMethod.POST)
 	public ResponseEntity<HealthAgent> insertHealthAgent(@RequestBody @Valid HealthAgent newObject, BindingResult result, HttpServletResponse response, HttpServletRequest request) {
 
+
+		System.out.println(newObject.toString());
+
+		newObject.setNickname(newObject.getUsername());
+
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
 		}
@@ -159,14 +164,14 @@ public class UserCrudController extends AbstractCRUDController<User>{
 			newObject.setPassword(DigestUtils.md5Hex(newObject.getPassword()));
 		}
 
-		System.out.println(newObject.toString());
+		System.out.println(newObject);
 
 		newObject = healthAgentService.save(newObject);
 
 		Link detail = linkTo(this.getClass()).slash(newObject.getId()).withSelfRel();
 		response.setHeader("Location", detail.getHref());
 
-		newObject = healthAgentService.loadRolesAndResorces(newObject);
+		newObject = (HealthAgent) healthAgentService.loadRolesAndResorces(newObject);
 
 		return new ResponseEntity<HealthAgent>(newObject, HttpStatus.CREATED);
 	}
@@ -175,6 +180,9 @@ public class UserCrudController extends AbstractCRUDController<User>{
 	@RequestMapping(value="/{id}/update-health-agent", method=RequestMethod.PUT)
 	public ResponseEntity<HealthAgent> UpdateHealthAgent(@RequestBody HealthAgent updatingObject,
 														 @PathVariable Long id, BindingResult result, HttpServletRequest request) {
+
+
+
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
 		}
@@ -321,7 +329,7 @@ public class UserCrudController extends AbstractCRUDController<User>{
 
 	@RequestMapping(value="/{id}/name", method=RequestMethod.PUT)
 	public ResponseEntity<User> changeName(@RequestBody User updatingObject,
-											   @PathVariable Long id, BindingResult result, HttpServletRequest request) {
+										   @PathVariable Long id, BindingResult result, HttpServletRequest request) {
 		if (result.hasErrors()) {
 			throw new ValidationException(result);
 		}
