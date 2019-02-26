@@ -103,21 +103,35 @@ public class ChallengeController extends AbstractCRUDController<Challenge>{
 	
 	private List<Challenge> getPlayerChallenges(Player player) {
 		List<Challenge> challenges = new ArrayList<>();
+		Challenge challenge = null;
 		
 		if(strikeDao.isPlayerEnrolledInChallenge(player)){
-			challenges.add(repository.findChallengeByName(ChallengeName.STRIKE.getName()));
+			challenge = repository.findChallengeByName(ChallengeName.STRIKE.getName());
+			if(challenge != null) {
+				challenges.add(challenge);
+			}
+			
 		}
 		
 		if(fightDao.isPlayerEnrolledInChallenge(player)){
-			challenges.add(repository.findChallengeByName(ChallengeName.FIGHT.getName()));
+			challenge = repository.findChallengeByName(ChallengeName.FIGHT.getName());
+			if(challenge != null) {
+				challenges.add(challenge);
+			}
 		}
 		
 		if(onTopDao.isPlayerTeamEnrolledInOnTopChallenge(player)){
-			challenges.add(repository.findChallengeByName(ChallengeName.ONTOP.getName()));
+			challenge = repository.findChallengeByName(ChallengeName.ONTOP.getName());
+			if(challenge != null) {
+				challenges.add(challenge);
+			}
 		}
 		
 		if(tucDao.isPlayerEnrolledInChallenge(player)){
-			challenges.add(repository.findChallengeByName(ChallengeName.TEAMUP.getName()));
+			challenge = repository.findChallengeByName(ChallengeName.TEAMUP.getName());
+			if(challenge != null) {
+				challenges.add(challenge);
+			}
 		}
 		
 		return challenges;
